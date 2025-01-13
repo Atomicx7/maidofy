@@ -1,17 +1,26 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "jsx": "react",
+    "esModuleInterop": true,
     "strict": true,
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ]
-    }
+    },
+    "types": [
+      "expo-router"
+    ]
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-  ]
+    "expo-env.d.ts",
+    "metro-resolver" // Add this line to include metro-resolver
+  ],
+  "extends": "expo/tsconfig.base"
 }
+
+// Note: This project contains native project folders but also has native configuration properties in app.json.
+// Ensure to run prebuild in your build pipeline to sync properties like orientation, icon, scheme, userInterfaceStyle, splash, ios, android, plugins.
