@@ -9,6 +9,8 @@ import CustomText from "@/components/shared/CustomText";
 import { createStackNavigator } from '@react-navigation/stack';
 import Role from './role';
 
+
+
 const Stack = createStackNavigator();
 
 const Main = () => {
@@ -41,10 +43,17 @@ const Main = () => {
     }
 
     return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Splash" component={SplashScreen} />
-            <Stack.Screen name="Role" component={Role} />
-        </Stack.Navigator>
+        <>
+            
+            <View style={{ flex: 1 }}>
+                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="Splash" component={SplashScreen} />
+                    <Stack.Screen name="Role" component={Role} />
+
+
+                </Stack.Navigator>
+            </View>
+        </>
     );
 };
 
@@ -86,6 +95,5 @@ function useFonts(fontMap: { [key: string]: any }): [boolean] {
     
     return [loaded];
 }
-
 
 export default Main;
