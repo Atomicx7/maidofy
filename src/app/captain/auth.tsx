@@ -7,6 +7,7 @@ import CustomText from "@/components/shared/CustomText";
 import PhoneInput from "@/components/shared/PhoneInput";
 import { commonStyles } from "@/styles/commonStyles";
 import CustomButton from "@/components/shared/CustomButton";
+import { router } from "expo-router";
 // import { signin } from "@/service/authService";
 
 const Auth = () => {
@@ -16,6 +17,7 @@ const Auth = () => {
             Alert.alert('Error','Please enter a valid phone number'); 
             return;
         }
+        router.navigate("/captain/Home");
         // signin({role:'captain',phone})
     }
     return (
