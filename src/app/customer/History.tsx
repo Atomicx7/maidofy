@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
-// Mock appointment data
 const recentAppointments = [
   {
     id: '1',
@@ -36,8 +35,10 @@ const recentAppointments = [
 
 const History = () => {
   const navigation = useNavigation();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredAppointments, setFilteredAppointments] = useState(recentAppointments);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | number | Date) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -47,9 +48,13 @@ const History = () => {
     });
   };
 
-  const handleAppointmentPress = (appointmentId: string) => {
-    console.log(`Appointment ${appointmentId} pressed`);
-    // Implement navigation or action on press
+  const handleSearch = (query: React.SetStateAction<string>) => {
+    setSearchQuery(query);
+    const filtered = recentAppointments.filter((appointment) =>
+      appointment.service.toLowerCase().includes(query.toLowerCase()) ||
+      appointment.cleaner.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredAppointments(filtered);
   };
 
   return (
@@ -67,6 +72,13 @@ const History = () => {
             <Text> </Text>
           </View>
         </View>
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Search appointments"
+          placeholderTextColor="#888"
+          value={searchQuery}
+          onChangeText={handleSearch}
+        />
       </View>
 
       <ScrollView
@@ -75,11 +87,11 @@ const History = () => {
       >
         <View style={styles.appointmentsSection}>
           <Text style={styles.sectionTitle}>Recent Appointments</Text>
-          {recentAppointments.map(appointment => (
+          {filteredAppointments.map((appointment) => (
             <TouchableOpacity
               key={appointment.id}
               style={styles.appointmentItem}
-              onPress={() => handleAppointmentPress(appointment.id)}
+              onPress={() => console.log(`Appointment ${appointment.id} pressed`)}
             >
               <View style={styles.appointmentLeft}>
                 <View style={styles.appointmentIcon}>
@@ -113,6 +125,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   fixedHeader: {
+    
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 15,
@@ -133,9 +146,22 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     letterSpacing: -0.5,
   },
+  searchBar: {
+    
+    marginTop: 40,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#ffffff',
+    backgroundColor: '#444444',
+  },
   scrollView: {
     flex: 1,
-    marginTop: 10,
+    marginTop: 20,
   },
   appointmentsSection: {
     paddingHorizontal: 20,

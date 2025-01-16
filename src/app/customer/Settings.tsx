@@ -21,14 +21,14 @@ const Settings = () => {
     {
       title: 'Account',
       items: [
-        { id: '1', title: 'Profile Information', icon: 'person-outline' },
+        { id: '1', title: 'Edit Profile', icon: 'person-outline' },
         { id: '2', title: 'Payment Methods', icon: 'card-outline' },
         { id: '3', title: 'Address Book', icon: 'location-outline' },
         { id: '4', title: 'Language', icon: 'language-outline' },
       ],
     },
     {
-      title: 'Preferences',
+      title: 'Security and preferences',
       items: [
         { 
           id: '5', 
@@ -40,8 +40,8 @@ const Settings = () => {
         },
         { 
           id: '6', 
-          title: 'Notifications', 
-          icon: 'notifications-outline',
+          title: 'Biometrics', 
+          icon: 'finger-print-outline',
           isToggle: true,
           value: notificationsEnabled,
           onToggle: () => setNotificationsEnabled(prev => !prev)
@@ -61,8 +61,10 @@ const Settings = () => {
       items: [
         { id: '10', title: 'Privacy Policy', icon: 'shield-outline' },
         { id: '11', title: 'Terms of Service', icon: 'document-text-outline' },
-        { id: '12', title: 'Data Usage', icon: 'analytics-outline' },
+        { id: '12', title: 'Delete My Account', icon: 'analytics-outline' },
+        { id: '13', title: 'Fair Treatment Policy', icon: 'analytics-outline' },
       ],
+      
     },
   ];
 
@@ -158,7 +160,7 @@ const Settings = () => {
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#F5F5F5',
+      backgroundColor: '#ffffff',
     },
     containerDark: {
       backgroundColor: '#000000',
@@ -167,7 +169,7 @@ const styles = StyleSheet.create({
       paddingHorizontal: 20,
       paddingTop: 20,
       paddingBottom: 15,
-      backgroundColor: 'rgba(255, 255, 255, 0.85)',
+      backgroundColor: 'rgb(255, 255, 255)',
       
       borderBottomColor: 'rgba(0, 0, 0, 0.1)',
       backdropFilter: 'blur(10px)',
@@ -187,7 +189,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
       fontSize: 22,
-      fontFamily: 'Inter-SemiBold',
+      fontFamily: 'SemiBold',
       color: '#1a1a1a',
       letterSpacing: -0.5,
     },
@@ -222,9 +224,9 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: 'rgb(255, 254, 249)',
       padding: 16,
-      borderRadius: 12,
+      borderRadius: 22,
       marginBottom: 8,
       shadowColor: '#000',
       shadowOffset: {
@@ -248,14 +250,14 @@ const styles = StyleSheet.create({
     iconContainer: {
       width: 36,
       height: 36,
-      borderRadius: 18,
-      backgroundColor: 'rgba(255, 152, 0, 0.1)',
+      borderRadius: 14,
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 12,
     },
     iconContainerDark: {
-      backgroundColor: 'rgba(255, 102, 0, 0.51)',
+      backgroundColor: 'rgba(180, 79, 11, 0.71)',
     },
     settingItemText: {
       fontSize: 16,
