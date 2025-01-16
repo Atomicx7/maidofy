@@ -11,11 +11,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { ScrollingText } from './scrolling-text';
+import { ReviewsSlider } from './reviews-slider';
 
 const { width } = Dimensions.get('window');
 
 const upcomingFeatures = [
-  { id: '1', title: 'Laundry' },
+  { id: '1', title: 'Subscription' },
   { id: '2', title: 'Gardening' },
   { id: '3', title: 'Pet Care' },
 ];
@@ -55,6 +57,14 @@ const Home = () => {
   const handleNavigateSettings = async () => {
     router.navigate('/customer/Settings');
   };
+  const handleNavigateBook = async () => {
+    router.navigate('/customer/Book');
+  };
+  const handleNavigateProfile = async () => {
+    router.navigate('/customer/Profile');
+  };
+
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,7 +77,7 @@ const Home = () => {
             />
             <Text style={styles.appName}>ProtoX</Text>
           </View>
-          <TouchableOpacity style={styles.profileIcon}>
+          <TouchableOpacity style={styles.profileIcon}  onPress={handleNavigateProfile}>
             <Icon name="person-circle-outline" size={56} color="#555555" />
           </TouchableOpacity>
         </View>
@@ -83,8 +93,8 @@ const Home = () => {
           <Text style={styles.featureDescription}>
             Book experienced and vetted house cleaners at the best prices.
           </Text>
-          <TouchableOpacity style={styles.bookButton}>
-            <Text style={styles.bookButtonText}>Book Now</Text>
+          <TouchableOpacity style={styles.bookButton}onPress={handleNavigateBook}>
+            <Text style={styles.bookButtonText} >Book Now</Text>
           </TouchableOpacity>
         </View>
 
@@ -101,16 +111,29 @@ const Home = () => {
             ))}
           </View>
         </View>
+        <ScrollingText />
+
+        <View style={[styles.featureCard, { backgroundColor: '#FF9800' }]}>
+          <Text style={styles.featureTitle}>Professional Cooking Service</Text>
+          <Text style={styles.featureDescription}>
+            Book experienced chefs to cook delicious meals at your home.
+          </Text>
+          <TouchableOpacity style={styles.bookButton} onPress={handleNavigateBook}>
+            <Text style={[styles.bookButtonText, { color: '#FF9800' }]}>Book Now</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={[styles.featureCard, { backgroundColor: '#4CAF50' }]}>
           <Text style={styles.featureTitle}>Repeat Previous Order</Text>
           <Text style={styles.featureDescription}>
-            Schedule and manage recurring cleanings with your favorite professionals.
+            Schedule and manage recurring cleanings with  professionals.
           </Text>
           <TouchableOpacity style={styles.bookButton}>
             <Text style={[styles.bookButtonText, { color: '#4CAF50' }]}>Schedule Now</Text>
           </TouchableOpacity>
         </View>
+
+        <ReviewsSlider />
 
         <View style={{ marginTop: 20 }} />
         <Text style={styles.sectionTitle}>Coming Soon</Text>
