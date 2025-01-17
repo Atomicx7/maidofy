@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { router } from 'expo-router';
+
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// import { checkBiometricSupport } from '../../app/customer/Settingspages/biometric';
+import { biometricsService } from '../../app/customer/Settingspages/biometric';
+
 
 type SettingsItem = {
   id: string;
@@ -16,6 +22,25 @@ type SettingsItem = {
 const Settings = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+
+  useEffect(() => {
+    checkBiometricSettings();
+  }, []);
+
+  const checkBiometricSettings = async () => {
+    const { available } = await biometricsService.checkBiometricSupport();
+    setIsBiometricSupported(available);
+    const enabled = await AsyncStorage.getItem('biometricEnabled');
+    setIsBiometricEnabled(enabled === 'true');
+  };
+  
+  const handleBiometricToggle = async () => {
+    if (!isBiometricSupported) return;
+    const newValue = !setIsBiometricEnabled;
+    await AsyncStorage.setItem('biometricEnabled', String(newValue));
+    setIsBiometricEnabled(newValue);
+  };
 
   const settingsSections = [
     {
@@ -40,11 +65,12 @@ const Settings = () => {
         },
         { 
           id: '6', 
-          title: 'Biometrics', 
+          title: 'Use Fingerprint', 
           icon: 'finger-print-outline',
           isToggle: true,
-          value: notificationsEnabled,
-          onToggle: () => setNotificationsEnabled(prev => !prev)
+          value: isBiometricSupported,
+          onToggle: handleBiometricToggle,
+          disabled: !isBiometricSupported
         },
       ],
     },
@@ -117,7 +143,41 @@ const Settings = () => {
                 ]}
                 onPress={() => {
                   if (!('isToggle' in item)) {
-                    // Handle navigation or action
+                    switch (item.id) {
+                      case '1':
+                        router.push('/customer/Profile');
+                        break;
+                      case '2':
+                        router.push('/customer/Settingspages/paymentmethods');
+                        break;
+                      case '3':
+                        router.push('/customer/Settingspages/addressbook');
+                        break;
+                      case '4':
+                        router.push('/customer/Settingspages/Language');
+                        break;
+                      case '7':
+                        router.push('/customer/Settingspages/helpcentre');
+                        break;
+                      case '8':
+                        router.push('/customer/Settingspages/contactus');
+                        break;
+                      case '9':
+                        router.push('/customer/Settingspages/report');
+                        break;
+                      case '10':
+                        router.push('/customer/Settingspages/Privacy');
+                        break;
+                      case '11':
+                        router.push('/customer/Settingspages/Tos');
+                        break;
+                      case '12':
+                        router.push('/customer/Settingspages/Delete-acc');
+                        break;
+                      case '13':
+                        router.push('/customer/Settingspages/Ftp');
+                        break;
+                    }
                   }
                 }}
               >
@@ -156,6 +216,7 @@ const Settings = () => {
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
     container: {
@@ -273,4 +334,8 @@ const styles = StyleSheet.create({
   });
 
 export default Settings;
+
+function setIsBiometricEnabled(arg0: boolean) {
+  throw new Error('Function not implemented.');
+}
 

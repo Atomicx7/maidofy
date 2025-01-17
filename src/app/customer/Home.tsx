@@ -49,19 +49,19 @@ const Home = () => {
   }, []);
 
   const handleNavigate = async () => {
-    router.navigate('/customer/History');
+    router.push('/customer/History');
   };
   const handleNavigateWallet = async () => {
-    router.navigate('/customer/Wallet');
+    router.push('/customer/Wallet');
   };
   const handleNavigateSettings = async () => {
-    router.navigate('/customer/Settings');
+    router.push('/customer/Settings');
   };
   const handleNavigateBook = async () => {
-    router.navigate('/customer/Book');
+    router.push('/customer/Book');
   };
   const handleNavigateProfile = async () => {
-    router.navigate('/customer/Profile');
+    router.push('/customer/Profile');
   };
 
 

@@ -48,7 +48,7 @@ const History = () => {
     });
   };
 
-  const handleSearch = (query: React.SetStateAction<string>) => {
+  const handleSearch = (query: string) => {
     setSearchQuery(query);
     const filtered = recentAppointments.filter((appointment) =>
       appointment.service.toLowerCase().includes(query.toLowerCase()) ||
