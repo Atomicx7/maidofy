@@ -31,6 +31,7 @@
     "@react-navigation/native-stack": "^7.2.0",
     "@react-navigation/stack": "^7.1.1",
     "axios": "^1.7.9",
+    "date-fns": "^4.1.0",
     "expo": "~52.0.24",
     "expo-blur": "~14.0.1",
     "expo-constants": "~17.0.3",
@@ -50,6 +51,7 @@
     "haversine-distance": "^1.2.3",
     "jwt-decode": "^4.0.0",
     "local-auth": "^0.0.3",
+    "lucide-react": "^0.473.0",
     "lucide-react-native": "^0.471.0",
     "metro": "^0.81.0",
     "metro-config": "^0.81.0",
@@ -82,6 +84,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@react-native-community/cli": "latest",
+    "@types/date-fns": "^2.5.3",
     "@types/expo": "^32.0.13",
     "@types/jest": "^29.5.12",
     "@types/react": "~18.3.12",
