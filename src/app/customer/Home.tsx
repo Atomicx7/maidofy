@@ -8,11 +8,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { ScrollingText } from './scrolling-text';
 import { ReviewsSlider } from './reviews-slider';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -23,12 +25,12 @@ const upcomingFeatures = [
 ];
 
 const availableServices = [
-  { id: '1', title: 'Mopping', icon: 'water-outline' },
-  { id: '2', title: 'Brooming', icon: 'brush-outline' },
-  { id: '3', title: 'Kitchen', icon: 'restaurant-outline' },
+  { id: '1', title: 'Mopping', icon: 'sparkles-outline' },
+  { id: '2', title: 'Brooming', icon: 'scan-outline' },
+  { id: '3', title: 'Kitchen', icon: 'fast-food-outline' },
   { id: '4', title: 'Bathroom', icon: 'water-outline' },
   { id: '5', title: 'Ironing', icon: 'shirt-outline' },
-  { id: '6', title: 'Dusting', icon: 'hand-left-outline' },
+  { id: '6', title: 'Dusting', icon: 'leaf-outline' },
 ];
 
 const Home = () => {
@@ -47,6 +49,11 @@ const Home = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+<View style={styles.container}> 
+  <StatusBar 
+barStyle="dark-content" 
+backgroundColor="#f3f3e9" /> </View> 
 
   const handleNavigate = async () => {
     router.push('/customer/History');
@@ -145,7 +152,11 @@ const Home = () => {
           ))}
         </View>
       </ScrollView>
-
+      <View style={styles.blurOverlay} />
+      <LinearGradient
+      colors={['rgba(243, 243, 233, 0)', 'rgba(247, 243, 241, 0.95)']}
+      style={styles.bottomBlur}
+    />
       <View style={styles.bottomDock}>
         <TouchableOpacity style={styles.dockItem}>
           <Icon name="home-outline" size={24} color="#FF9800" />
@@ -167,7 +178,7 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',                                    
+    backgroundColor: '#f3f3e9',                                    
   },
   scrollView: {
     flex: 1,
@@ -226,7 +237,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   featureCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#282238',
     borderRadius: 25,
     padding: 24,
     marginHorizontal: 20,
@@ -260,10 +271,10 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     backgroundColor: '#f7f7f7',
-    borderRadius: 18,
-    padding: 14,
-    width: (width - 75) / 3,
-    aspectRatio: 1,
+    borderRadius: 16,
+    padding: 12,
+    width: (width - 90) / 3,
+    aspectRatio: 0.9,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -276,16 +287,16 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   serviceIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(224, 202, 170, 0.01)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(224, 202, 170, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   serviceTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Inter-Medium',
     color: '#1a1a1a',
     textAlign: 'center',
@@ -374,10 +385,35 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
+    zIndex: 1000,
   },
   dockItem: {
     padding: 12,
   },
+  bottomBlur: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    zIndex: 1
+  },
+  
+
+  blurOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    backgroundColor: '',
+    backgroundGradient: {
+      colors: ['rgba(243, 243, 233, 0)', 'rgba(255, 255, 255, 0.9)'],
+      start: { x: 0, y: 0 },
+      end: { x: 0, y: 1 },
+    },
+  },
+  
 });
 
 export default Home;
