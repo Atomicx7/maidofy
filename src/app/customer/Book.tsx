@@ -242,7 +242,7 @@ export default function Book() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#f3f3e9',
   },
   scrollView: {
     flex: 1,
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fefefe',
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
