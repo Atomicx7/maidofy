@@ -4,32 +4,53 @@ import MapView, { Marker, Circle } from "react-native-maps";
 import * as Location from 'expo-location';
 
 const Home = () => {
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+const [location, setLocation] = useState<{
+    latitude: number; longitude: number 
+} | null>(null);
   const [captains, setCaptains] = useState<{ id: string; latitude: number; longitude: number; title: string; description: string }[]>([]);
   const mapRef = useRef<MapView>(null);
   const [captainId, setCaptainId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    const requestLocationPermission = async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         console.log('Permission to access location was denied');
         return;
       }
+    };
+    requestLocationPermission();
+  }, []);
 
+  useEffect(() => {
+    const getCurrentLocation = async () => {
+      if (loading) return;
+      setLoading(true);
       let location = await Location.getCurrentPositionAsync({});
-      setLocation(location.coords);
+      setLocation({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+      setLoading(false);
+    };
+    getCurrentLocation();
+  }, [loading]);
 
-      if (mapRef.current) {
+  useEffect(() => {
+    const animateToRegion = () => {
+      if (location && mapRef.current) {
         mapRef.current.animateToRegion({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
+          latitude: location.latitude,
+          longitude: location.longitude,
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
-        }, 300); // Reduced duration to 300ms
+        }, 300);
       }
+    };
+    animateToRegion();
+  }, [location]);
 
-      // Register captain's location
+  useEffect(() => {
+    const registerCaptain = async () => {
+      if (!captainId) return;
       const response = await fetch('https://api.example.com/register-captain', {
         method: 'POST',
         headers: {
@@ -37,47 +58,40 @@ const Home = () => {
         },
         body: JSON.stringify({
           id: captainId,
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
+          latitude: location ? location.latitude : 0,
+          longitude: location ? location.longitude : 0,
         }),
       });
       const data = await response.json();
       console.log('Captain registered:', data);
-
-      // Fetch captains near the user's location
-      const responseCaptains = await fetch(`https://api.example.com/captains?lat=${location.coords.latitude}&lon=${location.coords.longitude}`);
-      const dataCaptains = await responseCaptains.json();
-      setCaptains(dataCaptains);
-    })();
+    };
+    registerCaptain();
   }, [captainId]);
 
   useEffect(() => {
-    if (location && mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      }, 300); // Reduced duration to 300ms
-    }
+    const fetchCaptains = async () => {
+      if (!location) return;
+      const responseCaptains = await fetch(`https://api.example.com/captains?lat=${location.latitude}&lon=${location.longitude}`);
+      const dataCaptains = await responseCaptains.json();
+      setCaptains(dataCaptains);
+    };
+    fetchCaptains();
   }, [location]);
 
   const recenterMap = async () => {
     let location = await Location.getCurrentPositionAsync({});
     setLocation(location.coords);
-
     if (mapRef.current) {
       mapRef.current.animateToRegion({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
-      }, 300); // Reduced duration to 300ms
+      }, 300);
     }
   };
 
   const handleRegister = () => {
-    // Generate a unique ID for the captain
     const id = `captain_${Date.now()}`;
     setCaptainId(id);
   };
