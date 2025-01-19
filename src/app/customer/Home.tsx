@@ -178,7 +178,7 @@ const Home = () => {
       <ScrollView style={styles.scrollView}>
         <View style={styles.headerBottom}>
           <Text style={styles.greeting}>{greeting}, {userData.firstName} {userData.lastName}</Text>
-          <Text style={styles.location}>{userData.latitude}, {userData.longitude}</Text>
+          <Text style={styles.location}>{userData.landmark}, {userData.city}</Text>
         </View>
         
         <View style={styles.featureCard}>

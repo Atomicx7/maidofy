@@ -8,7 +8,7 @@ const Role = () => {
         router.navigate('/customer/auth');
     }
     const handleCaptainPress = () => {
-        router.navigate('/captain/auth');
+        router.navigate('/worker/auth');
     }
   return (
     <View style={roleStyles.container}>

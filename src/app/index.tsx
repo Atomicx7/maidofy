@@ -50,6 +50,7 @@ const Main = () => {
                     <Stack.Screen name="Splash" component={SplashScreen} />
                     <Stack.Screen name="Role" component={Role} />
                     <Stack.Screen name="Home" component={Home} />
+
                 </Stack.Navigator>
             </View>
 

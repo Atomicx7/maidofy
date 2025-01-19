@@ -12,8 +12,7 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import axios, { AxiosError } from 'axios';
 import moment from 'moment';
-import { getData, storeData } from '@/storage'; // Import utility functions
-import { router } from 'expo-router';
+import { getWorkerData, storeWorkerData } from '@/storage'; // Import worker-specific storage functions
 
 type RouteParams = {
   key: string;
@@ -28,13 +27,13 @@ type RouteParams = {
   pincode: string;
 };
 
-export default function Profile() {
+export default function WorkerProfile() {
   const route = useRoute<{ params: RouteParams }>();
   const navigation = useNavigation();
 
   const { firstName, lastName, mobileNumber, street, landmark, city, state, pincode } = route.params;
 
-  const [userData, setUserData] = useState({
+  const [workerData, setWorkerData] = useState({
     firstName: firstName || '',
     lastName: lastName || '',
     mobileNumber: mobileNumber || '',
@@ -51,18 +50,18 @@ export default function Profile() {
   const API_URL = 'http://192.168.29.223:3000';
 
   useEffect(() => {
-    const fetchStoredUserData = async () => {
-      const storedUserData = await getData('userData');
-      if (storedUserData) {
-        setUserData(storedUserData);
+    const fetchStoredWorkerData = async () => {
+      const storedWorkerData = await getWorkerData('workerData');
+      if (storedWorkerData) {
+        setWorkerData(storedWorkerData);
       }
     };
 
-    fetchStoredUserData();
+    fetchStoredWorkerData();
   }, []);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchWorkerData = async () => {
       if (!mobileNumber) {
         console.error('Mobile number is undefined');
         Alert.alert('Error', 'Mobile number is undefined');
@@ -70,21 +69,21 @@ export default function Profile() {
       }
 
       try {
-        const response = await axios.get(`${API_URL}/users/profile/${mobileNumber}`);
-        setUserData(response.data);
+        const response = await axios.get(`${API_URL}/workers/${mobileNumber}`);
+        setWorkerData(response.data);
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching worker data:', error);
         if (axios.isAxiosError(error as any) && (error as any).response) {
           const axiosError = error as AxiosError;
           const errorMessage = (axiosError.response?.data as { message: string }).message;
-          Alert.alert('Error', 'Error fetching user data: ' + errorMessage);
+          Alert.alert('Error', 'Error fetching worker data: ' + errorMessage);
         } else {
-          Alert.alert('Error', 'Error fetching user data');
+          Alert.alert('Error', 'Error fetching worker data');
         }
       }
     };
 
-    fetchUserData();
+    fetchWorkerData();
   }, [mobileNumber]);
 
   const handleSave = async () => {
@@ -95,15 +94,15 @@ export default function Profile() {
     }
 
     try {
-      const formattedUserData = {
-        ...userData,
-        dob: moment(userData.dob, 'DD/MM/YYYY').isValid() ? moment(userData.dob, 'DD/MM/YYYY').format('YYYY-MM-DD') : userData.dob
+      const formattedWorkerData = {
+        ...workerData,
+        dob: moment(workerData.dob, 'DD/MM/YYYY').isValid() ? moment(workerData.dob, 'DD/MM/YYYY').format('YYYY-MM-DD') : workerData.dob
       };
 
-      await axios.put(`${API_URL}/users/profile/${mobileNumber}`, formattedUserData);
-      await storeData('userData', formattedUserData); // Store updated user data in AsyncStorage
+      await axios.put(`${API_URL}/workers/profile/${mobileNumber}`, formattedWorkerData);
+      await storeWorkerData('workerData', formattedWorkerData); // Store updated worker data in AsyncStorage
       Alert.alert('Success', 'Profile updated successfully');
-      router.navigate('./Home'); // Redirect to Home
+      navigation.navigate('worker/Home', { ...formattedWorkerData }); // Redirect to Home with updated attributes
     } catch (error) {
       console.error('Error updating profile:', error);
       if (axios.isAxiosError(error as any) && (error as any).response) {
@@ -126,8 +125,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>First Name</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.firstName}
-              onChangeText={(text) => setUserData({ ...userData, firstName: text })}
+              value={workerData.firstName}
+              onChangeText={(text) => setWorkerData({ ...workerData, firstName: text })}
             />
           </View>
 
@@ -135,8 +134,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>Last Name</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.lastName}
-              onChangeText={(text) => setUserData({ ...userData, lastName: text })}
+              value={workerData.lastName}
+              onChangeText={(text) => setWorkerData({ ...workerData, lastName: text })}
             />
           </View>
 
@@ -144,8 +143,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>Mobile Number</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.mobileNumber}
-              onChangeText={(text) => setUserData({ ...userData, mobileNumber: text })}
+              value={workerData.mobileNumber}
+              onChangeText={(text) => setWorkerData({ ...workerData, mobileNumber: text })}
               keyboardType="phone-pad"
             />
           </View>
@@ -154,8 +153,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>Email</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.email}
-              onChangeText={(text) => setUserData({ ...userData, email: text })}
+              value={workerData.email}
+              onChangeText={(text) => setWorkerData({ ...workerData, email: text })}
               keyboardType="email-address"
             />
           </View>
@@ -164,8 +163,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>Date of Birth</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.dob}
-              onChangeText={(text) => setUserData({ ...userData, dob: text })}
+              value={workerData.dob}
+              onChangeText={(text) => setWorkerData({ ...workerData, dob: text })}
             />
           </View>
 
@@ -173,8 +172,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>Street</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.street}
-              onChangeText={(text) => setUserData({ ...userData, street: text })}
+              value={workerData.street}
+              onChangeText={(text) => setWorkerData({ ...workerData, street: text })}
             />
           </View>
 
@@ -182,8 +181,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>Landmark</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.landmark}
-              onChangeText={(text) => setUserData({ ...userData, landmark: text })}
+              value={workerData.landmark}
+              onChangeText={(text) => setWorkerData({ ...workerData, landmark: text })}
             />
           </View>
 
@@ -191,8 +190,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>City</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.city}
-              onChangeText={(text) => setUserData({ ...userData, city: text })}
+              value={workerData.city}
+              onChangeText={(text) => setWorkerData({ ...workerData, city: text })}
             />
           </View>
 
@@ -200,8 +199,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>State</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.state}
-              onChangeText={(text) => setUserData({ ...userData, state: text })}
+              value={workerData.state}
+              onChangeText={(text) => setWorkerData({ ...workerData, state: text })}
             />
           </View>
 
@@ -209,8 +208,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>Pincode</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.pincode}
-              onChangeText={(text) => setUserData({ ...userData, pincode: text })}
+              value={workerData.pincode}
+              onChangeText={(text) => setWorkerData({ ...workerData, pincode: text })}
               keyboardType="numeric"
             />
           </View>
@@ -219,8 +218,8 @@ export default function Profile() {
             <Text style={styles.infoLabel}>Age</Text>
             <TextInput
               style={styles.infoValue}
-              value={userData.age}
-              onChangeText={(text) => setUserData({ ...userData, age: text })}
+              value={workerData.age}
+              onChangeText={(text) => setWorkerData({ ...workerData, age: text })}
               keyboardType="numeric"
             />
           </View>

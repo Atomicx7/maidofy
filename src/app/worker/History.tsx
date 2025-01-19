@@ -4,24 +4,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import { getData } from '@/storage'; // Import utility function
+import { getWorkerData } from '@/storage'; // Import worker-specific storage functions
 
 const { width } = Dimensions.get('window');
 
 interface Appointment {
   _id: string;
-  service?: string;
-  cleaner?: string;
+  service: {
+    name: string;
+  };
+  customerMobileNumber: string;
   date: string;
-  numberOfRooms: number;
-  comments: string;
-  areas: string[];
-  selectedServices: string[];
-  status: boolean;
-  orderId: string; // Add orderId to the interface
+  status: string;
 }
 
-const History = () => {
+const WorkerHistory = () => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -32,12 +29,9 @@ const History = () => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const storedUserData = await getData('userData');
-        if (storedUserData) {
-          const endpoint = storedUserData.userType === 'worker' 
-            ? `http://192.168.29.223:3000//workerHistory/${storedUserData.mobileNumber}`
-            : `http://192.168.29.223:3000/service-booking/${storedUserData.mobileNumber}`;
-          
+        const storedWorkerData = await getWorkerData('workerData');
+        if (storedWorkerData) {
+          const endpoint = `http://192.168.29.223:3000/workerHistory/${storedWorkerData.mobileNumber}`;
           const response = await axios.get(endpoint);
           setAppointments(response.data);
           setFilteredAppointments(response.data);
@@ -63,8 +57,8 @@ const History = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     const filtered = appointments.filter((appointment) =>
-      (appointment.service?.toLowerCase().includes(query.toLowerCase()) || '') ||
-      (appointment.cleaner?.toLowerCase().includes(query.toLowerCase()) || '')
+      (appointment.service?.name.toLowerCase().includes(query.toLowerCase()) || '') ||
+      (appointment.customerMobileNumber.toLowerCase().includes(query.toLowerCase()) || '')
     );
     setFilteredAppointments(filtered);
   };
@@ -116,10 +110,10 @@ const History = () => {
                 </View>
                 <View>
                   <Text style={styles.appointmentService}>
-                    {appointment.service}
+                    {appointment.service.name}
                   </Text>
-                  <Text style={styles.appointmentCleaner}>
-                    {appointment.cleaner}
+                  <Text style={styles.appointmentCustomer}>
+                    {appointment.customerMobileNumber}
                   </Text>
                   <Text style={styles.appointmentDate}>
                     {formatDate(appointment.date)}
@@ -145,14 +139,10 @@ const History = () => {
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
               <Text style={styles.modalTitle}>Appointment Details</Text>
-              <Text style={styles.modalText}>Service: {selectedAppointment.service}</Text>
-              <Text style={styles.modalText}>Cleaner: {selectedAppointment.cleaner}</Text>
+              <Text style={styles.modalText}>Service: {selectedAppointment.service.name}</Text>
+              <Text style={styles.modalText}>Customer: {selectedAppointment.customerMobileNumber}</Text>
               <Text style={styles.modalText}>Date: {formatDate(selectedAppointment.date)}</Text>
-              <Text style={styles.modalText}>Rooms: {selectedAppointment.numberOfRooms}</Text>
-              <Text style={styles.modalText}>Comments: {selectedAppointment.comments}</Text>
-              <Text style={styles.modalText}>Areas: {selectedAppointment.areas.join(', ')}</Text>
-              <Text style={styles.modalText}>Selected Services: {selectedAppointment.selectedServices.join(', ')}</Text>
-              <Text style={styles.modalText}>Status: {selectedAppointment.status ? 'Completed' : 'Pending'}</Text>
+              <Text style={styles.modalText}>Status: {selectedAppointment.status}</Text>
               <Pressable
                 style={[styles.button, styles.buttonClose]}
                 onPress={() => setModalVisible(!modalVisible)}
@@ -255,7 +245,7 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     marginBottom: 4,
   },
-  appointmentCleaner: {
+  appointmentCustomer: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#666666',
@@ -319,4 +309,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default History;
+export default WorkerHistory;
