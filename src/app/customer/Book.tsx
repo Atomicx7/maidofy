@@ -56,6 +56,8 @@ export default function Book() {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showServicePicker, setShowServicePicker] = useState(false);
+
 
   useEffect(() => {
     const fetchUserData = async () => {

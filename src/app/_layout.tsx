@@ -1,31 +1,50 @@
-import React from 'react';
-
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
-import { gestureHandlerRootHOC, GestureHandlerRootView } from 'react-native-gesture-handler';
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-
-
-const StackNavigator = createNativeStackNavigator();
+import { gestureHandlerRootHOC } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// import { authenticateWithBiometrics } from '../app/customer/Settingspages/biometric';
+import { biometricsService } from '../app/customer/Settingspages/biometric';
 
 
 const Layout = () => {
-  return (
-    
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index"/>
-          <Stack.Screen name="role"/>
-          <Stack.Screen name="customer/auth"/>
-          <Stack.Screen name="captain/auth"/>
-          <Stack.Screen name="captain/Home"/>
-          <Stack.Screen name="customer/Home"/>
-          <Stack.Screen name="customer/History"/>
-          <Stack.Screen name="customer/Wallet"/>
-          <Stack.Screen name="customer/Settings"/>
-           {/* Updated route name */}
-        </Stack>
-      
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    checkBiometricAuth();
+  }, []);
+  const checkBiometricAuth = async () => {
+    try {
+      const biometricEnabled = await AsyncStorage.getItem('biometricEnabled');
+      if (biometricEnabled === 'true') {
+        const authenticated = await biometricsService.authenticate();
+        setIsAuthenticated(authenticated);
+      } else {
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      setIsAuthenticated(false);
+    }
+  };
   
+  if (!isAuthenticated) {
+    return null; // Or show a loading/authentication screen
+  }
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="customer/auth"/>
+      <Stack.Screen name="captain/auth"/>
+      <Stack.Screen name="captain/Home"/>
+      <Stack.Screen name="customer/Home"/>
+      <Stack.Screen name="customer/History"/>
+      <Stack.Screen name="customer/Wallet"/>
+      <Stack.Screen name="customer/Settings"/>
+    </Stack>
   );
 };
 

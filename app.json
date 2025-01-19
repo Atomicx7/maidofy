@@ -20,6 +20,7 @@
                 "googleMapsApiKey": "YOUR_GOOGLE_MAP_KEY"
             }
     },
+    "androidStatusBar": { "barStyle": "dark-content", "backgroundColor": "#f3f3e9" },
     "android": {
       "config": {
                 "googleMaps": {
