@@ -4,13 +4,14 @@ import { StyleSheet } from "react-native";
 export const roleStyles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.background,
+        backgroundColor: '#f3f3e9',
+        // backgroundColor: Colors.background,
         alignItems: 'center',
     },
     logo: {
         resizeMode: 'contain',
-        height: 50,
-        marginTop: 120,
+        height: 200,
+        marginTop: 40,
         marginBottom: 40
     },
     card: {
