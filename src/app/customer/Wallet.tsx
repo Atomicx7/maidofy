@@ -1,45 +1,59 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, TextInput, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { router } from 'expo-router';
+import axios, { AxiosError } from 'axios';
+import { getData } from '@/storage'; // Import utility function
 
 const { width } = Dimensions.get('window');
 
-// Mock transaction data
-const recentTransactions = [
-  {
-    id: '1',
-    type: 'credit',
-    amount: 50.00,
-    description: 'Added to wallet',
-    date: '2024-01-14T14:30:00',
-  },
-  {
-    id: '2',
-    type: 'debit',
-    amount: 35.00,
-    description: 'House Cleaning Service',
-    date: '2024-01-13T11:20:00',
-  },
-  {
-    id: '3',
-    type: 'credit',
-    amount: 100.00,
-    description: 'Added to wallet',
-    date: '2024-01-12T09:45:00',
-  },
-  {
-    id: '4',
-    type: 'debit',
-    amount: 45.00,
-    description: 'Kitchen Deep Clean',
-    date: '2024-01-11T16:15:00',
-  },
-];
-
 const Wallet = () => {
-  const [balance, setBalance] = useState(70.00);
+  const [balance, setBalance] = useState(0.00);
+  interface Transaction {
+    _id: string;
+    date: string;
+    type: 'credit' | 'debit';
+    amount: number;
+    description: string;
+  }
+
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [transactionType, setTransactionType] = useState<'credit' | 'debit'>('credit');
+  const [amount, setAmount] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const storedUserData = await getData('userData');
+      if (storedUserData) {
+        setMobileNumber(storedUserData.mobileNumber);
+        fetchBalanceAndTransactions(storedUserData.mobileNumber);
+      }
+    };
+
+    const fetchBalanceAndTransactions = async (mobileNumber: string) => {
+      try {
+        const userResponse = await axios.get(`http://192.168.29.223:3000/users/${mobileNumber}`);
+        setBalance(userResponse.data.balance);
+
+        const transactionsResponse = await axios.get(`http://192.168.29.223:3000/transactions/${mobileNumber}`);
+        setTransactions(transactionsResponse.data);
+      } catch (error) {
+        console.error('Error fetching balance and transactions:', error);
+        if (axios.isAxiosError(error as any) && (error as any).response) {
+          const axiosError = error as AxiosError;
+          const errorMessage = (axiosError.response?.data as { message: string }).message;
+          alert('Error fetching balance and transactions: ' + errorMessage);
+        } else {
+          alert('Error fetching balance and transactions');
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -52,13 +66,55 @@ const Wallet = () => {
   };
 
   const handleAddMoney = () => {
-    // Implement add money logic
-    console.log('Add money');
+    setTransactionType('credit');
+    setModalVisible(true);
   };
 
   const handleWithdraw = () => {
-    // Implement withdraw logic
-    console.log('Withdraw money');
+    setTransactionType('debit');
+    setModalVisible(true);
+  };
+
+  const handleTransaction = async () => {
+    const transactionAmount = parseFloat(amount);
+    if (isNaN(transactionAmount) || transactionAmount <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    const newTransaction = {
+      mobileNumber,
+      type: transactionType,
+      amount: transactionAmount,
+      description: transactionType === 'credit' ? 'Added to wallet' : 'Withdrawn from wallet',
+    };
+
+    try {
+      const response = await axios.post('http://192.168.29.223:3000/transactions', newTransaction);
+      setTransactions([response.data, ...transactions]);
+      setBalance(prevBalance => transactionType === 'credit' ? prevBalance + transactionAmount : prevBalance - transactionAmount);
+      setModalVisible(false);
+      setAmount('');
+    } catch (error) {
+      console.error('Error processing transaction:', error);
+      if (axios.isAxiosError(error as any) && (error as any).response) {
+        if (axios.isAxiosError(error)) {
+          const axiosError = error as AxiosError;
+          alert('Error processing transaction: ' + (axiosError.response?.data as { message: string }).message);
+console.log('Wallet component rendered');
+console.log('Balance:', balance);
+console.log('Transactions:', transactions);
+console.log('Modal visible:', modalVisible);
+console.log('Transaction type:', transactionType);
+console.log('Amount:', amount);
+console.log('Mobile number:', mobileNumber);        
+} else {
+          alert('Error processing transaction');
+        }
+      } else {
+        alert('Error processing transaction');
+      }
+    }
   };
 
   return (
@@ -84,7 +140,7 @@ const Wallet = () => {
       >
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
+          <Text style={styles.balanceAmount}>₹{balance.toFixed(2)}</Text>
           <View style={styles.actionButtons}>
             <TouchableOpacity 
               style={[styles.actionButton, styles.addButton]}
@@ -105,8 +161,8 @@ const Wallet = () => {
 
         <View style={styles.transactionsSection}>
           <Text style={styles.sectionTitle}>Recent Transactions</Text>
-          {recentTransactions.map(transaction => (
-            <View key={transaction.id} style={styles.transactionItem}>
+          {transactions.map(transaction => (
+            <View key={transaction._id} style={styles.transactionItem}>
               <View style={styles.transactionLeft}>
                 <View style={[
                   styles.transactionIcon,
@@ -131,13 +187,39 @@ const Wallet = () => {
                 styles.transactionAmount,
                 transaction.type === 'credit' ? styles.creditAmount : styles.debitAmount
               ]}>
-                {transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                {transaction.type === 'credit' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
               </Text>
             </View>
           ))}
         </View>
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>{transactionType === 'credit' ? 'Add Money' : 'Withdraw Money'}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter amount"
+              keyboardType="numeric"
+              value={amount}
+              onChangeText={setAmount}
+            />
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={handleTransaction}
+            >
+              <Text style={styles.textStyle}>Submit</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -152,7 +234,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
-   
   },
   headerTop: {
     flexDirection: 'row',
@@ -293,7 +374,55 @@ const styles = StyleSheet.create({
   bottomSpacing: {
     height: 100,
   },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonClose: {
+    backgroundColor: '#2196F3',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalTitle: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    width: '100%',
+  },
 });
 
 export default Wallet;
-

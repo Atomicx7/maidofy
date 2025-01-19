@@ -1,126 +1,60 @@
-import React, { useEffect, useState, useRef } from "react";
-import { View, StyleSheet, Button } from "react-native";
-import MapView, { Marker, Circle } from "react-native-maps";
-import * as Location from 'expo-location';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import MapComponent from './Map'; // Assuming you have a MapComponent
+import { getData } from '@/storage'; // Import utility function
 
 const Home = () => {
+  const [isReadyForWork, setIsReadyForWork] = useState(false);
+  interface Job {
+    id: string;
+    title: string;
+    // Add other job properties here
+  }
+
+  const [availableJobs, setAvailableJobs] = useState<Job[]>([]);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [captains, setCaptains] = useState<{ id: string; latitude: number; longitude: number; title: string; description: string }[]>([]);
-  const mapRef = useRef<MapView>(null);
-  const [captainId, setCaptainId] = useState<string | null>(null);
 
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.log('Permission to access location was denied');
-        return;
-      }
+    const fetchJobs = async () => {
+      // Fetch available jobs logic here
+    };
 
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location.coords);
+    fetchJobs();
+  }, []);
 
-      if (mapRef.current) {
-        mapRef.current.animateToRegion({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }, 300); // Reduced duration to 300ms
-      }
-
-      // Register captain's location
-      const response = await fetch('https://api.example.com/register-captain', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: captainId,
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        }),
-      });
-      const data = await response.json();
-      console.log('Captain registered:', data);
-
-      // Fetch captains near the user's location
-      const responseCaptains = await fetch(`https://api.example.com/captains?lat=${location.coords.latitude}&lon=${location.coords.longitude}`);
-      const dataCaptains = await responseCaptains.json();
-      setCaptains(dataCaptains);
-    })();
-  }, [captainId]);
-
-  useEffect(() => {
-    if (location && mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      }, 300); // Reduced duration to 300ms
-    }
-  }, [location]);
-
-  const recenterMap = async () => {
-    let location = await Location.getCurrentPositionAsync({});
-    setLocation(location.coords);
-
-    if (mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      }, 300); // Reduced duration to 300ms
-    }
-  };
-
-  const handleRegister = () => {
-    // Generate a unique ID for the captain
-    const id = `captain_${Date.now()}`;
-    setCaptainId(id);
+  const openMaps = () => {
+    // Logic to open maps
   };
 
   return (
     <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        initialRegion={{
-          latitude: location ? location.latitude : 37.78825,
-          longitude: location ? location.longitude : -122.4324,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
-      >
-        {location && (
-          <>
-            <Marker
-              coordinate={{ latitude: location.latitude, longitude: location.longitude }}
-              title={"My Location"}
-              description={"This is where I am"}
-            />
-            <Circle
-              center={{ latitude: location.latitude, longitude: location.longitude }}
-              radius={100}
-              strokeColor="rgba(0, 150, 255, 0.5)"
-              fillColor="rgba(0, 150, 255, 0.2)"
-            />
-          </>
-        )}
-        {captains.map((captain) => (
-          <Marker
-            key={captain.id}
-            coordinate={{ latitude: captain.latitude, longitude: captain.longitude }}
-            title={captain.title}
-            description={captain.description}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Welcome, Captain</Text>
+        <View style={styles.switchContainer}>
+          <Text style={styles.switchLabel}>Ready for Work</Text>
+          <Switch
+            value={isReadyForWork}
+            onValueChange={setIsReadyForWork}
+            trackColor={{ false: '#767577', true: '#4CAF50' }}
+            thumbColor={isReadyForWork ? '#fff' : '#f4f3f4'}
           />
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.mapCard} onPress={openMaps}>
+        <MapComponent setLocation={setLocation} />
+      </TouchableOpacity>
+
+      <View style={styles.jobsSection}>
+        <Text style={styles.sectionTitle}>Available Jobs Around You</Text>
+        {availableJobs.map(job => (
+          <View key={job.id} style={styles.jobCard}>
+            <View style={styles.jobInfo}>
+              <Text style={styles.jobTitle}>{job.title}</Text>
+              {/* Add more job details here */}
+            </View>
+          </View>
         ))}
-      </MapView>
-      <View style={styles.buttonContainer}>
-        <Button title="Recenter" onPress={recenterMap} />
-        <Button title="Register as Captain" onPress={handleRegister} />
       </View>
     </View>
   );
@@ -129,14 +63,70 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#ffffff',
   },
-  map: {
-    ...StyleSheet.absoluteFillObject,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
   },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
+  headerTitle: {
+    fontSize: 22,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1a1a1a',
+    letterSpacing: -0.5,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  switchLabel: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#666666',
+  },
+  mapCard: {
+    margin: 20,
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 2,
+  },
+  jobsSection: {
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#1a1a1a',
+    marginBottom: 16,
+    letterSpacing: -0.5,
+  },
+  jobCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  jobInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  jobTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#1a1a1a',
   },
 });
 

@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,25 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  TextInput,
+  Button,
+  FlatList,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Dock from './Dock';
+import axios from 'axios';
+import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getData } from '@/storage'; // Import utility function
+import io from 'socket.io-client';
 import { ScrollingText } from './scrolling-text';
 import { ReviewsSlider } from './reviews-slider';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
+const socket = io('http://192.168.29.223:3000');
 
 const upcomingFeatures = [
   { id: '1', title: 'Subscription' },
@@ -23,16 +35,45 @@ const upcomingFeatures = [
 ];
 
 const availableServices = [
-  { id: '1', title: 'Mopping', icon: 'water-outline' },
-  { id: '2', title: 'Brooming', icon: 'brush-outline' },
-  { id: '3', title: 'Kitchen', icon: 'restaurant-outline' },
+  { id: '1', title: 'Mopping', icon: 'sparkles-outline' },
+  { id: '2', title: 'Brooming', icon: 'scan-outline' },
+  { id: '3', title: 'Kitchen', icon: 'fast-food-outline' },
   { id: '4', title: 'Bathroom', icon: 'water-outline' },
   { id: '5', title: 'Ironing', icon: 'shirt-outline' },
-  { id: '6', title: 'Dusting', icon: 'hand-left-outline' },
+  { id: '6', title: 'Dusting', icon: 'leaf-outline' },
 ];
 
 const Home = () => {
   const [greeting, setGreeting] = useState('Good morning');
+  const [userData, setUserData] = useState({
+    firstName: '',
+    lastName: '',
+    mobileNumber: '',
+    address: '',
+    landmark: '',
+    city: '',
+    latitude: '',
+    longitude: '',
+  });
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  interface Bid {
+    _id: string;
+    price: number;
+  }
+
+  const [bids, setBids] = useState<Bid[]>([]);
+
+  useEffect(() => {
+    const fetchStoredUserData = async () => {
+      const storedUserData = await getData('userData');
+      if (storedUserData) {
+        setUserData(storedUserData);
+      }
+    };
+
+    fetchStoredUserData();
+  }, []);
 
   useEffect(() => {
     const updateGreeting = () => {
@@ -48,26 +89,78 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    socket.on('newBid', (bid) => {
+      setBids((prevBids) => [bid, ...prevBids]);
+    });
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserData = async () => {
+        try {
+          const response = await axios.get(`http://192.168.29.223:3000/users/profile/${userData.mobileNumber}`);
+          setUserData(response.data);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      };
+
+      if (userData.mobileNumber) {
+        fetchUserData();
+      }
+    }, [userData.mobileNumber])
+  );
+
+  const formatDate = (dateString: string | number | Date) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const handleNavigate = async () => {
-    router.navigate('/customer/History');
+    router.navigate('./History');
   };
   const handleNavigateWallet = async () => {
-    router.navigate('/customer/Wallet');
+    router.navigate('./Wallet');
   };
   const handleNavigateSettings = async () => {
-    router.navigate('/customer/Settings');
-  };
-  const handleNavigateBook = async () => {
-    router.navigate('/customer/Book');
-  };
-  const handleNavigateProfile = async () => {
-    router.navigate('/customer/Profile');
+    router.navigate('./Settings');
   };
 
+  const handleNavigateProfile = () => {
+    router.navigate(`./Profile?firstName=${userData.firstName}&lastName=${userData.lastName}&mobileNumber=${userData.mobileNumber}&landmark=${userData.landmark}&city=${userData.city}&address=${userData.address}`);
+  };
+  const handleBookNow = () => {
+    router.navigate('./Book');
+  };
 
+  const handleCreateServiceRequest = async () => {
+    const serviceRequest = {
+      customerId: 'customer-id', // Replace with actual customer ID
+      description,
+      price: parseFloat(price),
+      location: { type: 'Point', coordinates: [userData.longitude, userData.latitude] }, // Use actual coordinates
+    };
+    const response = await axios.post('http://192.168.29.223:3000/service-requests', serviceRequest);
+    socket.emit('createServiceRequest', response.data);
+  };
+
+  const handleAcceptBid = async (bidId: string) => {
+    await axios.post(`http://192.168.29.223:3000/bids/${bidId}/status`, { status: 'accepted' });
+  };
+
+  const handleDeclineBid = async (bidId: string) => {
+    await axios.post(`http://192.168.29.223:3000/bids/${bidId}/status`, { status: 'declined' });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#f3f3e9" />
       <View style={styles.fixedHeader}>
         <View style={styles.headerTop}>
           <View style={styles.brandContainer}>
@@ -75,26 +168,26 @@ const Home = () => {
               source={require('../../assets/icons/coupon.png')} 
               style={styles.logo} 
             />
-            <Text style={styles.appName}>ProtoX</Text>
+            <Text style={styles.appName}>{`${userData.firstName} ${userData.lastName}`}</Text>
           </View>
-          <TouchableOpacity style={styles.profileIcon}  onPress={handleNavigateProfile}>
+          <TouchableOpacity style={styles.profileIcon} onPress={handleNavigateProfile}>
             <Icon name="person-circle-outline" size={56} color="#555555" />
           </TouchableOpacity>
         </View>
       </View>
       <ScrollView style={styles.scrollView}>
         <View style={styles.headerBottom}>
-          <Text style={styles.greeting}>{greeting}, Sir</Text>
-          <Text style={styles.location}>New York, NY</Text>
+          <Text style={styles.greeting}>{greeting}, {userData.firstName} {userData.lastName}</Text>
+          <Text style={styles.location}>{userData.latitude}, {userData.longitude}</Text>
         </View>
-
+        
         <View style={styles.featureCard}>
           <Text style={styles.featureTitle}>Professional Cleaning Services</Text>
           <Text style={styles.featureDescription}>
             Book experienced and vetted house cleaners at the best prices.
           </Text>
-          <TouchableOpacity style={styles.bookButton}onPress={handleNavigateBook}>
-            <Text style={styles.bookButtonText} >Book Now</Text>
+          <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
+            <Text style={styles.bookButtonText}>Book Now</Text>
           </TouchableOpacity>
         </View>
 
@@ -118,7 +211,7 @@ const Home = () => {
           <Text style={styles.featureDescription}>
             Book experienced chefs to cook delicious meals at your home.
           </Text>
-          <TouchableOpacity style={styles.bookButton} onPress={handleNavigateBook}>
+          <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
             <Text style={[styles.bookButtonText, { color: '#FF9800' }]}>Book Now</Text>
           </TouchableOpacity>
         </View>
@@ -126,7 +219,7 @@ const Home = () => {
         <View style={[styles.featureCard, { backgroundColor: '#4CAF50' }]}>
           <Text style={styles.featureTitle}>Repeat Previous Order</Text>
           <Text style={styles.featureDescription}>
-            Schedule and manage recurring cleanings with  professionals.
+            Schedule and manage recurring cleanings with your favorite professionals.
           </Text>
           <TouchableOpacity style={styles.bookButton}>
             <Text style={[styles.bookButtonText, { color: '#4CAF50' }]}>Schedule Now</Text>
@@ -145,7 +238,11 @@ const Home = () => {
           ))}
         </View>
       </ScrollView>
-
+      <View style={styles.blurOverlay} />
+      <LinearGradient
+        colors={['rgba(243, 243, 233, 0)', 'rgba(247, 243, 241, 0.95)']}
+        style={styles.bottomBlur}
+      />
       <View style={styles.bottomDock}>
         <TouchableOpacity style={styles.dockItem}>
           <Icon name="home-outline" size={24} color="#FF9800" />
@@ -167,7 +264,7 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',                                    
+    backgroundColor: '#f3f3e9',                                    
   },
   scrollView: {
     flex: 1,
@@ -179,10 +276,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1000,
-  
     paddingHorizontal: 20,
     paddingTop: 20,
-   
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
     backdropFilter: 'blur(10px)',
@@ -226,7 +321,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   featureCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#282238',
     borderRadius: 25,
     padding: 24,
     marginHorizontal: 20,
@@ -254,16 +349,15 @@ const styles = StyleSheet.create({
   servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-
     justifyContent: 'space-between',
     gap: 16,
   },
   serviceCard: {
     backgroundColor: '#f7f7f7',
-    borderRadius: 18,
-    padding: 14,
-    width: (width - 75) / 3,
-    aspectRatio: 1,
+    borderRadius: 16,
+    padding: 12,
+    width: (width - 90) / 3,
+    aspectRatio: 0.9,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -276,16 +370,16 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   serviceIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(224, 202, 170, 0.01)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(224, 202, 170, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   serviceTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Inter-Medium',
     color: '#1a1a1a',
     textAlign: 'center',
@@ -374,11 +468,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
+    zIndex: 1000,
   },
   dockItem: {
     padding: 12,
   },
+  bottomBlur: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    zIndex: 1,
+  },
+  blurOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
 });
 
 export default Home;
-

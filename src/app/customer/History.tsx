@@ -1,42 +1,50 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Dimensions, Modal, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import { getData } from '@/storage'; // Import utility function
 
 const { width } = Dimensions.get('window');
 
-const recentAppointments = [
-  {
-    id: '1',
-    cleaner: 'John Doe',
-    service: 'House Cleaning',
-    date: '2025-01-14T14:30:00',
-  },
-  {
-    id: '2',
-    cleaner: 'Jane Smith',
-    service: 'Deep Clean',
-    date: '2025-01-13T11:20:00',
-  },
-  {
-    id: '3',
-    cleaner: 'Emily Johnson',
-    service: 'Kitchen Cleaning',
-    date: '2025-01-12T09:45:00',
-  },
-  {
-    id: '4',
-    cleaner: 'Michael Brown',
-    service: 'Bathroom Cleaning',
-    date: '2025-01-11T16:15:00',
-  },
-];
+interface Appointment {
+  _id: string;
+  service?: string;
+  cleaner?: string;
+  date: string;
+  numberOfRooms: number;
+  comments: string;
+  areas: string[];
+  selectedServices: string[];
+  status: boolean;
+  orderId: string; // Add orderId to the interface
+}
 
 const History = () => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredAppointments, setFilteredAppointments] = useState(recentAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const storedUserData = await getData('userData');
+        if (storedUserData) {
+          const response = await axios.get(`http://192.168.29.223:3000/service-booking/${storedUserData.mobileNumber}`);
+          setAppointments(response.data);
+          setFilteredAppointments(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   const formatDate = (dateString: string | number | Date) => {
     const date = new Date(dateString);
@@ -48,13 +56,18 @@ const History = () => {
     });
   };
 
-  const handleSearch = (query: React.SetStateAction<string>) => {
+  const handleSearch = (query: string) => {
     setSearchQuery(query);
-    const filtered = recentAppointments.filter((appointment) =>
-      appointment.service.toLowerCase().includes(query.toLowerCase()) ||
-      appointment.cleaner.toLowerCase().includes(query.toLowerCase())
+    const filtered = appointments.filter((appointment) =>
+      (appointment.service?.toLowerCase().includes(query.toLowerCase()) || '') ||
+      (appointment.cleaner?.toLowerCase().includes(query.toLowerCase()) || '')
     );
     setFilteredAppointments(filtered);
+  };
+
+  const handleAppointmentPress = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setModalVisible(true);
   };
 
   return (
@@ -89,9 +102,9 @@ const History = () => {
           <Text style={styles.sectionTitle}>Recent Appointments</Text>
           {filteredAppointments.map((appointment) => (
             <TouchableOpacity
-              key={appointment.id}
+              key={appointment._id}
               style={styles.appointmentItem}
-              onPress={() => console.log(`Appointment ${appointment.id} pressed`)}
+              onPress={() => handleAppointmentPress(appointment)}
             >
               <View style={styles.appointmentLeft}>
                 <View style={styles.appointmentIcon}>
@@ -115,6 +128,37 @@ const History = () => {
         </View>
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {selectedAppointment && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Appointment Details</Text>
+              <Text style={styles.modalText}>Service: {selectedAppointment.service}</Text>
+              <Text style={styles.modalText}>Cleaner: {selectedAppointment.cleaner}</Text>
+              <Text style={styles.modalText}>Date: {formatDate(selectedAppointment.date)}</Text>
+              <Text style={styles.modalText}>Rooms: {selectedAppointment.numberOfRooms}</Text>
+              <Text style={styles.modalText}>Comments: {selectedAppointment.comments}</Text>
+              <Text style={styles.modalText}>Areas: {selectedAppointment.areas.join(', ')}</Text>
+              <Text style={styles.modalText}>Selected Services: {selectedAppointment.selectedServices.join(', ')}</Text>
+              <Text style={styles.modalText}>Status: {selectedAppointment.status ? 'Completed' : 'Pending'}</Text>
+              <Pressable
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => setModalVisible(!modalVisible)}
+              >
+                <Text style={styles.textStyle}>Close</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 };
@@ -125,7 +169,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   fixedHeader: {
-    
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 15,
@@ -147,7 +190,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   searchBar: {
-    
     marginTop: 40,
     height: 50,
     borderWidth: 1,
@@ -219,8 +261,57 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#666666',
   },
+  appointmentDetails: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#666666',
+  },
   bottomSpacing: {
     height: 100,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonClose: {
+    backgroundColor: '#2196F3',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalTitle: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  modalText: {
+    marginBottom: 10,
+    textAlign: 'center',
   },
 });
 
