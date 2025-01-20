@@ -13,7 +13,7 @@ const Role = () => {
   return (
     <View style={roleStyles.container}>
         <Image
-            source={require('../assets/images/logo_t.png')} // Ensure this path is correct
+            source={require('../assets/LOGOS/logo2.png')} // Ensure this path is correct
             style={roleStyles.logo}
         />
         <CustomText fontFamily="Medium" variant="h2" style={roleStyles.title}>
@@ -21,7 +21,7 @@ const Role = () => {
         </CustomText>
         <TouchableOpacity style={roleStyles.card} onPress={handleCustomerPress}>
             <Image
-                source={require('../assets/images/customer.png')} // Ensure this path is correct
+                source={require('../assets/images/customer1.webp')} // Ensure this path is correct
                 style={roleStyles.image}
             />
             <View style={roleStyles.cardContent}>
@@ -33,7 +33,7 @@ const Role = () => {
         </TouchableOpacity>
         <TouchableOpacity style={roleStyles.card} onPress={handleCaptainPress}>
             <Image
-                source={require('../assets/images/captain.png')} // Ensure this path is correct
+                source={require('../assets/images/maid.jpg')} // Ensure this path is correct
                 style={roleStyles.image}
             />
             <View style={roleStyles.cardContent}>

@@ -24,6 +24,7 @@ import io from 'socket.io-client';
 import { ScrollingText } from './scrolling-text';
 import { ReviewsSlider } from './reviews-slider';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../../utils/theme';
 
 const { width } = Dimensions.get('window');
 const socket = io('http://192.168.29.223:3000');
@@ -35,15 +36,16 @@ const upcomingFeatures = [
 ];
 
 const availableServices = [
-  { id: '1', title: 'Mopping', icon: 'sparkles-outline' },
-  { id: '2', title: 'Brooming', icon: 'scan-outline' },
-  { id: '3', title: 'Kitchen', icon: 'fast-food-outline' },
-  { id: '4', title: 'Bathroom', icon: 'water-outline' },
-  { id: '5', title: 'Ironing', icon: 'shirt-outline' },
-  { id: '6', title: 'Dusting', icon: 'leaf-outline' },
+  { id: '1', title: 'Mopping', icon: 'sparkles-outline', color: '#4CAF50' },
+  { id: '2', title: 'Brooming', icon: 'scan-outline', color: '#FF9800' },
+  { id: '3', title: 'Kitchen', icon: 'fast-food-outline', color: '#F44336' },
+  { id: '4', title: 'Bathroom', icon: 'water-outline', color: '#2196F3' },
+  { id: '5', title: 'Ironing', icon: 'shirt-outline', color: '#9C27B0' },
+  { id: '6', title: 'Dusting', icon: 'leaf-outline', color: '#795548' },
 ];
 
 const Home = () => {
+  const { colors, isDark } = useTheme();
   const [greeting, setGreeting] = useState('Good morning');
   const [userData, setUserData] = useState({
     firstName: '',
@@ -159,16 +161,17 @@ const Home = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f3f3e9" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar  barStyle={isDark ? "light-content" : "dark-content"} 
+        backgroundColor={isDark ? '#000000' : '#fff'} />
       <View style={styles.fixedHeader}>
         <View style={styles.headerTop}>
           <View style={styles.brandContainer}>
             <Image 
-              source={require('../../assets/icons/coupon.png')} 
+              source={require('../../assets/LOGOS/logo3.png')} 
               style={styles.logo} 
             />
-            <Text style={styles.appName}>{`${userData.firstName} ${userData.lastName}`}</Text>
+            <Text style={styles.appName}>Kwick</Text>
           </View>
           <TouchableOpacity style={styles.profileIcon} onPress={handleNavigateProfile}>
             <Icon name="person-circle-outline" size={56} color="#555555" />
@@ -177,11 +180,39 @@ const Home = () => {
       </View>
       <ScrollView style={styles.scrollView}>
         <View style={styles.headerBottom}>
-          <Text style={styles.greeting}>{greeting}, {userData.firstName} {userData.lastName}</Text>
-          <Text style={styles.location}>{userData.landmark}, {userData.city}</Text>
+          <Text style={[styles.greeting, { color: colors.text }]}>{greeting}, {userData.firstName} {userData.lastName}</Text>
+          <Text style={styles.location}>{userData.latitude}, {userData.longitude}</Text>
         </View>
         
         <View style={styles.featureCard}>
+          
+          <Image
+             source={
+              isDark 
+                ? require('../../assets/images/Magneto.jpeg')
+                : require('../../assets/images/maid.jpg')
+            }
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '200%',
+              height: '200%',
+             
+              filter: 'blur(20px)',
+            }}
+          />
+          <View style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(8, 8, 8, 1)',
+            backgroundColor: isDark ? 'rgba(18, 18, 18, 0.42)' : 'rgba(6, 6, 6, 0.42)',
+          }} />
           <Text style={styles.featureTitle}>Professional Cleaning Services</Text>
           <Text style={styles.featureDescription}>
             Book experienced and vetted house cleaners at the best prices.
@@ -192,31 +223,51 @@ const Home = () => {
         </View>
 
         <View style={styles.servicesSection}>
-          <Text style={styles.servicesSectionTitle}>Available Services</Text>
-          <View style={styles.servicesGrid}>
-            {availableServices.map((service) => (
-              <TouchableOpacity key={service.id} style={styles.serviceCard}>
-                <View style={styles.serviceIconContainer}>
-                  <Icon name={service.icon} size={24} color="#FF9800" />
-                </View>
-                <Text style={styles.serviceTitle}>{service.title}</Text>
-              </TouchableOpacity>
-            ))}
+  <Text style={[styles.servicesSectionTitle, { color: colors.text }]}>
+    Available Services
+  </Text>
+  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    <View style={styles.servicesGrid}>
+      {availableServices.map((service) => (
+        <TouchableOpacity
+          key={service.id}
+          style={[
+            styles.serviceCard,
+            {
+              backgroundColor: isDark 
+                ? `${service.color}20`
+                : `${service.color}10`,
+              borderColor: colors.border
+            }
+          ]}
+          onPress={() => handleBookNow()}
+        >
+          <View 
+            style={[
+              styles.serviceIconContainer,
+              {
+                backgroundColor: isDark 
+                  ? `${service.color}30`
+                  : `${service.color}20`
+              }
+            ]}
+          >
+            <Icon name={service.icon} size={24} color={service.color} />
           </View>
-        </View>
+          <Text style={[styles.serviceTitle, { color: service.color }]}>
+            {service.title}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </ScrollView>
+</View>
+
         <ScrollingText />
 
-        <View style={[styles.featureCard, { backgroundColor: '#FF9800' }]}>
-          <Text style={styles.featureTitle}>Professional Cooking Service</Text>
-          <Text style={styles.featureDescription}>
-            Book experienced chefs to cook delicious meals at your home.
-          </Text>
-          <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
-            <Text style={[styles.bookButtonText, { color: '#FF9800' }]}>Book Now</Text>
-          </TouchableOpacity>
-        </View>
+       
 
-        <View style={[styles.featureCard, { backgroundColor: '#4CAF50' }]}>
+        <View style={[styles.featureCard, { backgroundColor: '#926bce' }]}>
           <Text style={styles.featureTitle}>Repeat Previous Order</Text>
           <Text style={styles.featureDescription}>
             Schedule and manage recurring cleanings with your favorite professionals.
@@ -240,9 +291,12 @@ const Home = () => {
       </ScrollView>
       <View style={styles.blurOverlay} />
       <LinearGradient
-        colors={['rgba(243, 243, 233, 0)', 'rgba(247, 243, 241, 0.95)']}
+        colors={ isDark 
+          ? ['rgba(18, 18, 18, 0)', 'rgba(0, 0, 0, 0.95)'] 
+          : ['rgba(243, 243, 233, 0)', 'rgba(247, 243, 241, 0.95)']}
         style={styles.bottomBlur}
       />
+      
       <View style={styles.bottomDock}>
         <TouchableOpacity style={styles.dockItem}>
           <Icon name="home-outline" size={24} color="#FF9800" />
@@ -264,7 +318,6 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f3e9',                                    
   },
   scrollView: {
     flex: 1,
@@ -277,7 +330,7 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1000,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 14,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
     backdropFilter: 'blur(10px)',
@@ -303,13 +356,12 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   headerBottom: {
-    marginTop: 16,
+    marginTop: 10,
     paddingHorizontal: 20,
   },
   greeting: {
-    fontSize: 29,
-    fontFamily: 'Inter-SemiBold',
-    color: '#333333',
+    fontSize: 28,
+    fontFamily: 'Inter-Bold',
     marginBottom: 4,
   },
   location: {
@@ -321,10 +373,13 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   featureCard: {
-    backgroundColor: '#282238',
-    borderRadius: 25,
-    padding: 24,
-    marginHorizontal: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(193, 193, 193, 0.24)',
+    borderRadius: 40,
+    padding: 20,
+    // marginHorizontal: 16,
+    marginStart: 20,
+    marginEnd: 20,
     marginTop: 48,
     shadowColor: '#FF9800',
     shadowOffset: {
@@ -334,6 +389,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 8,
+    overflow: 'hidden',
   },
   servicesSection: {
     marginTop: 32,
@@ -353,27 +409,30 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   serviceCard: {
-    backgroundColor: '#f7f7f7',
-    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
     padding: 12,
-    width: (width - 90) / 3,
-    aspectRatio: 0.9,
+    width:90,
+    // width: (width) / 4,
+    aspectRatio: 1.0,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.3)',
+    // shadowColor: '#000',
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 2,
+    // },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // elevation: 2,
   },
   serviceIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(224, 202, 170, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
@@ -389,7 +448,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
     color: '#FFFFFF',
     marginBottom: 12,
-    letterSpacing: -0.5,
+    letterSpacing: 0,
   },
   featureDescription: {
     fontSize: 16,
@@ -399,15 +458,19 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   bookButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.77)',
+    backdropFilter:'blur(10px)',
+    borderRadius: 24,
+    borderWidth: 0.1,
+    paddingVertical: 16,
     paddingHorizontal: 32,
-    alignSelf: 'flex-start',
+    marginEnd : 10,
+    marginStart : 10,
   },
   bookButtonText: {
-    color: '#FF9800',
+    color: '#000',
     fontSize: 16,
+    alignSelf: 'center',
     fontFamily: 'Inter-SemiBold',
   },
   sectionTitle: {
@@ -451,10 +514,10 @@ const styles = StyleSheet.create({
   bottomDock: {
     position: 'absolute',
     bottom: 20,
-    left: 40,
-    right: 40,
+    left: 30,
+    right: 30,
     height: 64,
-    borderRadius: 32,
+    borderRadius: 26,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
@@ -487,7 +550,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0)',
   },
 });
 
