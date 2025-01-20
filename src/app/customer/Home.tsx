@@ -97,6 +97,9 @@ const Home = () => {
   const handleNavigateProfile = () => {
     router.navigate(`./Profile?firstName=${userData.firstName}&lastName=${userData.lastName}&mobileNumber=${userData.mobileNumber}&landmark=${userData.landmark}&city=${userData.city}&address=${userData.address}`);
   };
+  const handleBookProfile = () => {
+    router.navigate("./Book");
+  };
 
   const availableServices = [
     { id: 1, color: '#FF9800', title: 'Cleaning', icon: 'broom-outline' },
@@ -152,7 +155,7 @@ const Home = () => {
           <Text style={styles.featureDescription}>
             Book experienced and vetted house cleaners at the best prices.
           </Text>
-          <TouchableOpacity style={styles.bookButton} onPress={() => handleSendMessage('Book Now')}>
+          <TouchableOpacity style={styles.bookButton} onPress={handleBookProfile}>
             <Text style={styles.bookButtonText}>Book Now</Text>
           </TouchableOpacity>
         </View>

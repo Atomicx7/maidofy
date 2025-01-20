@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Dimensions, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Dimensions, Modal, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { getWorkerData } from '@/storage'; // Import worker-specific storage functions
 
 const { width } = Dimensions.get('window');
@@ -38,6 +38,16 @@ const WorkerHistory = () => {
         }
       } catch (error) {
         console.error('Error fetching appointments:', error);
+        if (axios.isAxiosError(error as any) && (error as any).response) {
+          const axiosError = error as AxiosError;
+          const errorMessage = (axiosError.response?.data as { message: string }).message;
+          Alert.alert('Error', 'Error fetching appointments: ' + errorMessage);
+        } else if ((error as Error).message) {
+          const errorMessage = (error as Error).message;
+          Alert.alert('Error', 'Network request failed: ' + errorMessage);
+        } else {
+          Alert.alert('Error', 'Error fetching appointments');
+        }
       }
     };
 

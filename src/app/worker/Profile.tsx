@@ -9,7 +9,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 import axios, { AxiosError } from 'axios';
 import moment from 'moment';
 import { getWorkerData, storeWorkerData } from '@/storage'; // Import worker-specific storage functions
@@ -27,9 +27,26 @@ type RouteParams = {
   pincode: string;
 };
 
+type WorkerStackParamList = {
+  'worker/Home': {
+    dob: string;
+    firstName: string;
+    lastName: string;
+    mobileNumber: string;
+    email: string;
+    street: string;
+    landmark: string;
+    city: string;
+    state: string;
+    pincode: string;
+    age: string;
+  };
+};
+
 export default function WorkerProfile() {
-  const route = useRoute<{ params: RouteParams }>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<WorkerStackParamList>>();
+  const route = useRoute<{ key: string; name: string; params: RouteParams }>();
+
 
   const { firstName, lastName, mobileNumber, street, landmark, city, state, pincode } = route.params;
 
@@ -77,6 +94,9 @@ export default function WorkerProfile() {
           const axiosError = error as AxiosError;
           const errorMessage = (axiosError.response?.data as { message: string }).message;
           Alert.alert('Error', 'Error fetching worker data: ' + errorMessage);
+        } else if ((error as Error).message) {
+          const errorMessage = (error as Error).message;
+          Alert.alert('Error', 'Network request failed: ' + errorMessage);
         } else {
           Alert.alert('Error', 'Error fetching worker data');
         }

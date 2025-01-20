@@ -10,11 +10,13 @@ import {
   Linking,
   Switch,
   ScrollView,
+  Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MapComponent from './Map';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { getWorkerData } from '../../storage'; // Import worker-specific storage functions
 import { useFocusEffect } from '@react-navigation/native';
 import io from 'socket.io-client';
@@ -63,6 +65,7 @@ const Home = () => {
     age: ''
   });
   const [messages, setMessages] = useState<string[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const updateGreeting = () => {
@@ -98,7 +101,12 @@ const Home = () => {
             setWorkerData(response.data);
           }
         } catch (error) {
-          console.error('Error fetching worker data:', error);
+          if (axios.isAxiosError(error)) {
+            console.error('Error fetching worker data:', error.message);
+          } else {
+            console.error('Error fetching worker data:', error);
+          }
+          alert('Failed to fetch worker data. Please check your network connection and try again.');
         }
       };
 
@@ -197,17 +205,8 @@ const Home = () => {
           ))}
         </View>
 
-        <View style={styles.messagesSection}>
-          <Text style={styles.messagesSectionTitle}>Messages</Text>
-          {messages.map((message, index) => (
-            <View key={index} style={styles.messageCard}>
-              <Text style={styles.messageText}>{message}</Text>
-            </View>
-          ))}
-        </View>
-
-        <TouchableOpacity style={styles.sendMessageButton} onPress={() => handleSendMessage('Hello from worker!')}>
-          <Text style={styles.sendMessageButtonText}>Send Message</Text>
+        <TouchableOpacity style={styles.sendMessageButton} onPress={() => setModalVisible(true)}>
+          <Text style={styles.sendMessageButtonText}>Messages</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -225,6 +224,28 @@ const Home = () => {
           <Icon name="settings-outline" size={24} color="#757575" />
         </TouchableOpacity>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>Messages</Text>
+          {messages.map((message, index) => (
+            <View key={index} style={styles.messageCard}>
+              <Text style={styles.messageText}>{message}</Text>
+            </View>
+          ))}
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setModalVisible(false)}
+          >
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -378,29 +399,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
   },
-  messagesSection: {
-    marginTop: 24,
-    paddingHorizontal: 20,
-  },
-  messagesSectionTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#1a1a1a',
-    marginBottom: 16,
-    letterSpacing: -0.5,
-  },
-  messageCard: {
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  messageText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#333333',
-  },
   sendMessageButton: {
     backgroundColor: '#FF9800',
     borderRadius: 8,
@@ -438,6 +436,44 @@ const styles = StyleSheet.create({
   },
   dockItem: {
     padding: 12,
+  },
+  modalView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+    color: '#ffffff',
+    marginBottom: 16,
+  },
+  messageCard: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    marginBottom: 10,
+    backgroundColor: '#ffffff',
+  },
+  messageText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#333333',
+  },
+  closeButton: {
+    backgroundColor: '#FF9800',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  closeButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
   },
 });
 

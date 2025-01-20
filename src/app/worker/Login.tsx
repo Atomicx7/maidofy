@@ -1,16 +1,17 @@
 import { authStyles } from "@/styles/authStyles";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
-import { ScrollView, TouchableOpacity, View, Image, Alert } from "react-native";
+import { ScrollView, TouchableOpacity, View, Image, Text, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomText from "@/components/shared/CustomText";
 import PhoneInput from "@/components/shared/PhoneInput";
 import { commonStyles } from "@/styles/commonStyles";
 import CustomButton from "@/components/shared/CustomButton";
 import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 import { storeWorkerData, getWorkerData, clearWorkerData } from '../../storage'; // Import worker-specific storage functions
+import { router } from "expo-router";
 
 const API_URL = 'http://192.168.29.223:3000'; // Replace with your actual API URL
 
@@ -24,7 +25,14 @@ const fetchWorkerData = async (mobileNumber: string) => {
 };
 
 type LoginNavigationProp = {
-  navigate: (screen: string, params: { mobileNumber: string }) => void;
+  navigate: (screen: string, params: { 
+    mobileNumber: string; 
+    userType?: string; 
+    firstName?: string; 
+    lastName?: string; 
+    city?: string; 
+    landmark?: string; 
+  }) => void;
 };
 
 const Login = () => {
@@ -71,10 +79,15 @@ const Login = () => {
       }
     } catch (error: any) {
       console.error('Login error details:', error);
-      Alert.alert(
-        'Login Failed',
-        error.message || 'Please check your connection and try again'
-      );
+      if (axios.isAxiosError(error as any) && (error as any).response) {
+        const axiosError = error as AxiosError;
+        const errorMessage = (axiosError.response?.data as { message: string }).message;
+        Alert.alert('Error', 'Error logging in: ' + errorMessage);
+      } else if (error.message) {
+        Alert.alert('Error', 'Network request failed: ' + error.message);
+      } else {
+        Alert.alert('Error', 'Login Failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -99,7 +112,6 @@ const Login = () => {
         />
 
         <TouchableOpacity onPress={() => navigation.navigate('worker/auth', {
-            userId: "",
             userType: "customer",
             firstName: "",
             lastName: "",

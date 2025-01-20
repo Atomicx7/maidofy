@@ -8,7 +8,7 @@ import PhoneInput from "@/components/shared/PhoneInput";
 import { commonStyles } from "@/styles/commonStyles";
 import CustomButton from "@/components/shared/CustomButton";
 import { router } from "expo-router";
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { storeWorkerData, clearWorkerData } from '../../storage'; // Import the new storage functions
 
 const WorkerSignup = () => {
@@ -35,10 +35,18 @@ const WorkerSignup = () => {
             const response = await axios.post('http://192.168.29.223:3000/workers/register', workerData);
             console.log('Worker registered:', response.data);
             await storeWorkerData('workerData', response.data); // Store worker data in AsyncStorage
-            router.navigate("./Home", { mobileNumber: workerData.mobileNumber });
+            router.push({ pathname: "./Home", params: { mobileNumber: workerData.mobileNumber } });
         } catch (error) {
             console.error('Error registering worker:', error);
-            Alert.alert('Error', 'Failed to register worker');
+            if (axios.isAxiosError(error as any) && (error as any).response) {
+                const axiosError = error as AxiosError;
+                const errorMessage = (axiosError.response?.data as { message: string }).message;
+                Alert.alert('Error', 'Error registering worker: ' + errorMessage);
+            } else if (error instanceof Error && error.message) {
+                Alert.alert('Error', 'Network request failed: ' + error.message);
+            } else {
+                Alert.alert('Error', 'Failed to register worker');
+            }
         }
     };
 
