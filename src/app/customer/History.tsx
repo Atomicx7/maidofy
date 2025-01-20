@@ -34,11 +34,7 @@ const History = () => {
       try {
         const storedUserData = await getData('userData');
         if (storedUserData) {
-          const endpoint = storedUserData.userType === 'worker' 
-            ? `http://192.168.29.223:3000//workerHistory/${storedUserData.mobileNumber}`
-            : `http://192.168.29.223:3000/service-booking/${storedUserData.mobileNumber}`;
-          
-          const response = await axios.get(endpoint);
+          const response = await axios.get(`http://192.168.29.223:3000/service-booking/${storedUserData.mobileNumber}`);
           setAppointments(response.data);
           setFilteredAppointments(response.data);
         }

@@ -9,14 +9,14 @@ import { commonStyles } from "@/styles/commonStyles";
 import CustomButton from "@/components/shared/CustomButton";
 import { router } from "expo-router";
 import axios from 'axios';
-import { storeWorkerData } from '../../storage'; // Import the new storage functions
+import { storeWorkerData, clearWorkerData } from '../../storage'; // Import the new storage functions
 
 const WorkerSignup = () => {
     const [workerData, setWorkerData] = useState({
         firstName: '',
         lastName: '',
         mobileNumber: '',
-        address: '',
+        street: '',
         landmark: '',
         city: ''
     });
@@ -31,10 +31,11 @@ const WorkerSignup = () => {
             return;
         }
         try {
+            await clearWorkerData('workerData'); // Clear old session data
             const response = await axios.post('http://192.168.29.223:3000/workers/register', workerData);
             console.log('Worker registered:', response.data);
-            await storeWorkerData('userData', response.data); // Store worker data in AsyncStorage
-            router.navigate("./Home");
+            await storeWorkerData('workerData', response.data); // Store worker data in AsyncStorage
+            router.navigate("./Home", { mobileNumber: workerData.mobileNumber });
         } catch (error) {
             console.error('Error registering worker:', error);
             Alert.alert('Error', 'Failed to register worker');
@@ -77,9 +78,9 @@ const WorkerSignup = () => {
                 />
                 <TextInput
                     style={authStyles.input}
-                    placeholder="Address"
-                    value={workerData.address}
-                    onChangeText={(text) => handleChange('address', text)}
+                    placeholder="Street"
+                    value={workerData.street}
+                    onChangeText={(text) => handleChange('street', text)}
                 />
                 <TextInput
                     style={authStyles.input}

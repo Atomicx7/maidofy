@@ -1,7 +1,7 @@
 import { authStyles } from "@/styles/authStyles";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
-import { ScrollView, TouchableOpacity, View, Image, Text, Alert } from "react-native";
+import { ScrollView, TouchableOpacity, View, Image, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomText from "@/components/shared/CustomText";
 import PhoneInput from "@/components/shared/PhoneInput";
@@ -24,7 +24,7 @@ const fetchWorkerData = async (mobileNumber: string) => {
 };
 
 type LoginNavigationProp = {
-  navigate: (screen: string, params: { userId: string; userType: 'customer' | 'worker'; firstName: string; lastName: string; city: string; landmark: string; mobileNumber: string; }) => void;
+  navigate: (screen: string, params: { mobileNumber: string }) => void;
 };
 
 const Login = () => {
@@ -37,12 +37,6 @@ const Login = () => {
       const storedWorkerData = await getWorkerData('workerData');
       if (storedWorkerData) {
         navigation.navigate('worker/Home', {
-          userId: storedWorkerData._id,
-          userType: storedWorkerData.userType,
-          firstName: storedWorkerData.firstName,
-          lastName: storedWorkerData.lastName,
-          city: storedWorkerData.city,
-          landmark: storedWorkerData.landmark,
           mobileNumber: storedWorkerData.mobileNumber,
         });
       }
@@ -72,12 +66,6 @@ const Login = () => {
       if (workerData) {
         await storeWorkerData('workerData', workerData); // Store worker data in AsyncStorage
         navigation.navigate('worker/Home', {
-          userId: workerData._id,
-          userType: workerData.userType,
-          firstName: workerData.firstName,
-          lastName: workerData.lastName,
-          city: workerData.city,
-          landmark: workerData.landmark,
           mobileNumber: workerData.mobileNumber,
         });
       }

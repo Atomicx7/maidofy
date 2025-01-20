@@ -1,4 +1,3 @@
-import { useFocusEffect } from '@react-navigation/native';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -8,41 +7,21 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  TextInput,
-  Button,
-  FlatList,
   StatusBar,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
-import Dock from './Dock';
 import axios from 'axios';
 import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { getData } from '@/storage'; // Import utility function
 import io from 'socket.io-client';
-import { ScrollingText } from './scrolling-text';
-import { ReviewsSlider } from './reviews-slider';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../utils/theme';
 
 const { width } = Dimensions.get('window');
 const socket = io('http://192.168.29.223:3000');
-
-const upcomingFeatures = [
-  { id: '1', title: 'Subscription' },
-  { id: '2', title: 'Gardening' },
-  { id: '3', title: 'Pet Care' },
-];
-
-const availableServices = [
-  { id: '1', title: 'Mopping', icon: 'sparkles-outline', color: '#4CAF50' },
-  { id: '2', title: 'Brooming', icon: 'scan-outline', color: '#FF9800' },
-  { id: '3', title: 'Kitchen', icon: 'fast-food-outline', color: '#F44336' },
-  { id: '4', title: 'Bathroom', icon: 'water-outline', color: '#2196F3' },
-  { id: '5', title: 'Ironing', icon: 'shirt-outline', color: '#9C27B0' },
-  { id: '6', title: 'Dusting', icon: 'leaf-outline', color: '#795548' },
-];
 
 const Home = () => {
   const { colors, isDark } = useTheme();
@@ -57,14 +36,7 @@ const Home = () => {
     latitude: '',
     longitude: '',
   });
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  interface Bid {
-    _id: string;
-    price: number;
-  }
-
-  const [bids, setBids] = useState<Bid[]>([]);
+  const [messages, setMessages] = useState<{ user: string; message: string }[]>([]);
 
   useEffect(() => {
     const fetchStoredUserData = async () => {
@@ -92,9 +64,13 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    socket.on('newBid', (bid) => {
-      setBids((prevBids) => [bid, ...prevBids]);
+    socket.on('message', (message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
     });
+
+    return () => {
+      socket.off('message');
+    };
   }, []);
 
   useFocusEffect(
@@ -114,63 +90,28 @@ const Home = () => {
     }, [userData.mobileNumber])
   );
 
-  const formatDate = (dateString: string | number | Date) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const handleNavigate = async () => {
-    router.navigate('./History');
-  };
-  const handleNavigateWallet = async () => {
-    router.navigate('./Wallet');
-  };
-  const handleNavigateSettings = async () => {
-    router.navigate('./Settings');
+  const handleSendMessage = (message: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined) => {
+    socket.emit('message', { user: userData.firstName, message });
   };
 
   const handleNavigateProfile = () => {
     router.navigate(`./Profile?firstName=${userData.firstName}&lastName=${userData.lastName}&mobileNumber=${userData.mobileNumber}&landmark=${userData.landmark}&city=${userData.city}&address=${userData.address}`);
   };
-  const handleBookNow = () => {
-    router.navigate('./Book');
-  };
 
-  const handleCreateServiceRequest = async () => {
-    const serviceRequest = {
-      customerId: 'customer-id', // Replace with actual customer ID
-      description,
-      price: parseFloat(price),
-      location: { type: 'Point', coordinates: [userData.longitude, userData.latitude] }, // Use actual coordinates
-    };
-    const response = await axios.post('http://192.168.29.223:3000/service-requests', serviceRequest);
-    socket.emit('createServiceRequest', response.data);
-  };
-
-  const handleAcceptBid = async (bidId: string) => {
-    await axios.post(`http://192.168.29.223:3000/bids/${bidId}/status`, { status: 'accepted' });
-  };
-
-  const handleDeclineBid = async (bidId: string) => {
-    await axios.post(`http://192.168.29.223:3000/bids/${bidId}/status`, { status: 'declined' });
-  };
+  const availableServices = [
+    { id: 1, color: '#FF9800', title: 'Cleaning', icon: 'broom-outline' },
+    { id: 2, color: '#4CAF50', title: 'Laundry', icon: 'shirt-outline' },
+    { id: 3, color: '#2196F3', title: 'Cooking', icon: 'restaurant-outline' },
+    { id: 4, color: '#9C27B0', title: 'Babysitting', icon: 'baby-outline' },
+  ];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar  barStyle={isDark ? "light-content" : "dark-content"} 
-        backgroundColor={isDark ? '#000000' : '#fff'} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? '#000000' : '#fff'} />
       <View style={styles.fixedHeader}>
         <View style={styles.headerTop}>
           <View style={styles.brandContainer}>
-            <Image 
-              source={require('../../assets/LOGOS/logo3.png')} 
-              style={styles.logo} 
-            />
+            <Image source={require('../../assets/LOGOS/logo3.png')} style={styles.logo} />
             <Text style={styles.appName}>Kwick</Text>
           </View>
           <TouchableOpacity style={styles.profileIcon} onPress={handleNavigateProfile}>
@@ -183,15 +124,11 @@ const Home = () => {
           <Text style={[styles.greeting, { color: colors.text }]}>{greeting}, {userData.firstName} {userData.lastName}</Text>
           <Text style={styles.location}>{userData.latitude}, {userData.longitude}</Text>
         </View>
-        
+
         <View style={styles.featureCard}>
-          
           <Image
-             source={
-              isDark 
-                ? require('../../assets/images/Magneto.jpeg')
-                : require('../../assets/images/maid.jpg')
-            }
+            source={isDark ? require('../../assets/images/Magneto.jpeg') : require('../../assets/images/maid.jpg')}
+            blurRadius={20}
             style={{
               position: 'absolute',
               top: 0,
@@ -200,8 +137,6 @@ const Home = () => {
               bottom: 0,
               width: '200%',
               height: '200%',
-             
-              filter: 'blur(20px)',
             }}
           />
           <View style={{
@@ -217,97 +152,74 @@ const Home = () => {
           <Text style={styles.featureDescription}>
             Book experienced and vetted house cleaners at the best prices.
           </Text>
-          <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
+          <TouchableOpacity style={styles.bookButton} onPress={() => handleSendMessage('Book Now')}>
             <Text style={styles.bookButtonText}>Book Now</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.servicesSection}>
-  <Text style={[styles.servicesSectionTitle, { color: colors.text }]}>
-    Available Services
-  </Text>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-    <View style={styles.servicesGrid}>
-      {availableServices.map((service) => (
-        <TouchableOpacity
-          key={service.id}
-          style={[
-            styles.serviceCard,
-            {
-              backgroundColor: isDark 
-                ? `${service.color}20`
-                : `${service.color}10`,
-              borderColor: colors.border
-            }
-          ]}
-          onPress={() => handleBookNow()}
-        >
-          <View 
-            style={[
-              styles.serviceIconContainer,
-              {
-                backgroundColor: isDark 
-                  ? `${service.color}30`
-                  : `${service.color}20`
-              }
-            ]}
-          >
-            <Icon name={service.icon} size={24} color={service.color} />
-          </View>
-          <Text style={[styles.serviceTitle, { color: service.color }]}>
-            {service.title}
+          <Text style={[styles.servicesSectionTitle, { color: colors.text }]}>
+            Available Services
           </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  </ScrollView>
-</View>
-
-        <ScrollingText />
-
-       
-
-        <View style={[styles.featureCard, { backgroundColor: '#926bce' }]}>
-          <Text style={styles.featureTitle}>Repeat Previous Order</Text>
-          <Text style={styles.featureDescription}>
-            Schedule and manage recurring cleanings with your favorite professionals.
-          </Text>
-          <TouchableOpacity style={styles.bookButton}>
-            <Text style={[styles.bookButtonText, { color: '#4CAF50' }]}>Schedule Now</Text>
-          </TouchableOpacity>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.servicesGrid}>
+              {availableServices.map((service: { id: React.Key | null | undefined; color: any; title: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; icon: any; }) => (
+                <TouchableOpacity
+                  key={service.id}
+                  style={[
+                    styles.serviceCard,
+                    {
+                      backgroundColor: isDark ? `${service.color}20` : `${service.color}10`,
+                      borderColor: colors.border
+                    }
+                  ]}
+                  onPress={() => handleSendMessage(service.title)}
+                >
+                  <View
+                    style={[
+                      styles.serviceIconContainer,
+                      {
+                        backgroundColor: isDark ? `${service.color}30` : `${service.color}20`
+                      }
+                    ]}
+                  >
+                    <Icon name={service.icon} size={24} color={service.color} />
+                  </View>
+                  <Text style={[styles.serviceTitle, { color: service.color }]}>
+                    {service.title}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
         </View>
 
-        <ReviewsSlider />
-
-        <View style={{ marginTop: 20 }} />
-        <Text style={styles.sectionTitle}>Coming Soon</Text>
-        <View style={styles.upcomingFeatures}>
-          {upcomingFeatures.map((feature) => (
-            <View key={feature.id} style={styles.upcomingFeatureCard}>
-              <Text style={styles.upcomingFeatureTitle}>{feature.title}</Text>
+        <View style={styles.messagesSection}>
+          <Text style={styles.messagesSectionTitle}>Messages</Text>
+          {messages.map((message, index) => (
+            <View key={index} style={styles.messageCard}>
+              <Text style={styles.messageText}>{message.user}: {message.message}</Text>
             </View>
           ))}
         </View>
       </ScrollView>
       <View style={styles.blurOverlay} />
       <LinearGradient
-        colors={ isDark 
-          ? ['rgba(18, 18, 18, 0)', 'rgba(0, 0, 0, 0.95)'] 
-          : ['rgba(243, 243, 233, 0)', 'rgba(247, 243, 241, 0.95)']}
+        colors={isDark ? ['rgba(18, 18, 18, 0)', 'rgba(0, 0, 0, 0.95)'] : ['rgba(243, 243, 233, 0)', 'rgba(247, 243, 241, 0.95)']}
         style={styles.bottomBlur}
       />
-      
+
       <View style={styles.bottomDock}>
         <TouchableOpacity style={styles.dockItem}>
           <Icon name="home-outline" size={24} color="#FF9800" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.dockItem} onPress={handleNavigate}>
+        <TouchableOpacity style={styles.dockItem} onPress={() => router.navigate('./History')}>
           <Icon name="time-outline" size={24} color="#757575" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.dockItem} onPress={handleNavigateWallet}>
+        <TouchableOpacity style={styles.dockItem} onPress={() => router.navigate('./Wallet')}>
           <Icon name="wallet-outline" size={24} color="#757575" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.dockItem} onPress={handleNavigateSettings}>
+        <TouchableOpacity style={styles.dockItem} onPress={() => router.navigate('./Settings')}>
           <Icon name="settings-outline" size={24} color="#757575" />
         </TouchableOpacity>
       </View>
@@ -377,7 +289,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(193, 193, 193, 0.24)',
     borderRadius: 40,
     padding: 20,
-    // marginHorizontal: 16,
     marginStart: 20,
     marginEnd: 20,
     marginTop: 48,
@@ -412,21 +323,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 20,
     padding: 12,
-    width:90,
-    // width: (width) / 4,
+    width: 90,
     aspectRatio: 1.0,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.3)',
-    // shadowColor: '#000',
-    // shadowOffset: {
-    //   width: 0,
-    //   height: 2,
-    // },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 4,
-    // elevation: 2,
   },
   serviceIconContainer: {
     width: 40,
@@ -459,13 +361,13 @@ const styles = StyleSheet.create({
   },
   bookButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.77)',
-    backdropFilter:'blur(10px)',
+    backdropFilter: 'blur(10px)',
     borderRadius: 24,
     borderWidth: 0.1,
     paddingVertical: 16,
     paddingHorizontal: 32,
-    marginEnd : 10,
-    marginStart : 10,
+    marginEnd: 10,
+    marginStart: 10,
   },
   bookButtonText: {
     color: '#000',
@@ -473,43 +375,51 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     fontFamily: 'Inter-SemiBold',
   },
-  sectionTitle: {
+  messagesSection: {
+    marginTop: 32,
+    paddingHorizontal: 20,
+  },
+  messagesSectionTitle: {
     fontSize: 20,
     fontFamily: 'Inter-Bold',
     color: '#1a1a1a',
-    marginHorizontal: 20,
-    marginTop: 32,
     marginBottom: 16,
     letterSpacing: -0.5,
   },
-  upcomingFeatures: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 110,
-  },
-  upcomingFeatureCard: {
-    backgroundColor: '#FFFFFF',
+  messageCard: {
+    backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 20,
-    width: width / 3 - 20,
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  upcomingFeatureTitle: {
-    fontSize: 15,
-    fontFamily: 'Inter-SemiBold',
-    color: '#1a1a1a',
-    textAlign: 'center',
+  messageText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#333333',
+  },
+  blurOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0)',
+  },
+  bottomBlur: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    zIndex: 1,
   },
   bottomDock: {
     position: 'absolute',
@@ -535,22 +445,6 @@ const styles = StyleSheet.create({
   },
   dockItem: {
     padding: 12,
-  },
-  bottomBlur: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    zIndex: 1,
-  },
-  blurOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0)',
   },
 });
 
