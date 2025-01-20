@@ -36,7 +36,7 @@ const Login = () => {
     const fetchStoredUserData = async () => {
       const storedUserData = await getData('userData');
       if (storedUserData) {
-        navigation.navigate('customer/Home', {
+        navigation.navigate('./Home', {
           userId: storedUserData._id,
           userType: storedUserData.userType,
           firstName: storedUserData.firstName,

@@ -27,7 +27,7 @@ export const ScrollingText = () => {
   }, []);
 
   return (
-    <View style={[styles.container,{ backgroundColor: isDark ? '#121212' : '#f3f3e9'}]}>
+    <View style={[styles.container,{ backgroundColor: isDark ? '#121212' : '#fff'}]}>
       <Animated.Text
         style={[
           styles.text,

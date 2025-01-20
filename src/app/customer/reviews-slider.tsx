@@ -1,24 +1,24 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Animated, StyleSheet, Dimensions, useColorScheme } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 const reviews = [
   {
     id: '1',
-    name: 'John D.',
+    name: 'Amit',
     rating: 5,
     text: 'Excellent service! Very professional and thorough.',
   },
   {
     id: '2',
-    name: 'Sarah M.',
+    name: 'Sonu',
     rating: 5,
     text: 'Best cleaning service Ive ever used. Highly recommended!',
   },
   {
     id: '3',
-    name: 'Mike R.',
+    name: 'Ojas Mehta',
     rating: 4,
     text: 'Great attention to detail and friendly staff.',
   },
@@ -26,13 +26,15 @@ const reviews = [
 
 export const ReviewsSlider = () => {
   const scrollX = useRef(new Animated.Value(0)).current;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
     const scrollAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(scrollX, {
           toValue: -width * (reviews.length - 1),
-          duration: 15000,
+          duration: 10000,
           useNativeDriver: true,
         }),
         Animated.timing(scrollX, {
@@ -56,6 +58,10 @@ export const ReviewsSlider = () => {
             key={review.id}
             style={[
               styles.reviewCard,
+              { 
+                backgroundColor: isDark ? 'rgb(255, 255, 255)' : 'rgb(255, 255, 255)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+              },
               {
                 transform: [
                   {
@@ -65,9 +71,15 @@ export const ReviewsSlider = () => {
               },
             ]}
           >
-            <Text style={styles.reviewName}>{review.name}</Text>
-            <Text style={styles.reviewRating}>{'⭐'.repeat(review.rating)}</Text>
-            <Text style={styles.reviewText}>{review.text}</Text>
+            <Text style={[styles.reviewName, { color: isDark ? '#FFFFFF' : '#333333' }]}>
+              {review.name}
+            </Text>
+            <Text style={[styles.reviewRating, { color: isDark ? '#FFD700' : '#FF9800' }]}>
+              {'★'.repeat(review.rating)}
+            </Text>
+            <Text style={[styles.reviewText, { color: isDark ? '#CCCCCC' : '#666666' }]}>
+              {review.text}
+            </Text>
           </Animated.View>
         ))}
       </View>
@@ -93,10 +105,13 @@ const styles = StyleSheet.create({
   },
   reviewCard: {
     position: 'absolute',
-    width: width - 40,
+    height: 110,
+    // width: width - 10,
     backgroundColor: '#f7f7f7',
     borderRadius: 16,
-    padding: 16,
+    paddingTop: 8,
+    paddingRight: 16,
+    paddingStart: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

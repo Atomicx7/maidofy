@@ -25,6 +25,21 @@ import { ScrollingText } from './scrolling-text';
 import { ReviewsSlider } from './reviews-slider';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../utils/theme';
+import { 
+  useFonts,
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_500Medium,
+  PlayfairDisplay_600SemiBold,
+  PlayfairDisplay_700Bold,
+} from '@expo-google-fonts/playfair-display';
+import { 
+  Comfortaa_300Light,
+  Comfortaa_400Regular,
+  Comfortaa_500Medium,
+  Comfortaa_600SemiBold,
+  Comfortaa_700Bold,
+} from '@expo-google-fonts/comfortaa';
+import {Audiowide_400Regular } from '@expo-google-fonts/audiowide';
 
 const { width } = Dimensions.get('window');
 const socket = io('http://192.168.29.223:3000');
@@ -45,6 +60,19 @@ const availableServices = [
 ];
 
 const Home = () => {
+  const [fontsLoaded] = useFonts({
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_500Medium,
+    PlayfairDisplay_600SemiBold,
+    PlayfairDisplay_700Bold,
+    Comfortaa_300Light,
+    Comfortaa_400Regular,
+    Comfortaa_500Medium,
+    Comfortaa_600SemiBold,
+    Comfortaa_700Bold,
+    Audiowide_400Regular
+  });
+
   const { colors, isDark } = useTheme();
   const [greeting, setGreeting] = useState('Good morning');
   const [userData, setUserData] = useState({
@@ -56,6 +84,7 @@ const Home = () => {
     city: '',
     latitude: '',
     longitude: '',
+    profileImage: '',
   });
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -168,13 +197,23 @@ const Home = () => {
         <View style={styles.headerTop}>
           <View style={styles.brandContainer}>
             <Image 
-              source={require('../../assets/LOGOS/logo3.png')} 
+              source={require('../../assets/LOGOS/logo5.1.png')} 
               style={styles.logo} 
             />
-            <Text style={styles.appName}>Kwick</Text>
+            <Text style={[styles.appName,{ fontFamily: 'Audiowide_400Regular', color: isDark ? '#FFFFFF' : '#1a1a1a' }]}>Kwick</Text>
           </View>
           <TouchableOpacity style={styles.profileIcon} onPress={handleNavigateProfile}>
-            <Icon name="person-circle-outline" size={56} color="#555555" />
+            {userData.profileImage ? (
+              <Image 
+                source={{ uri: userData.profileImage }} 
+                style={styles.profileImage}
+              />
+            ) : (
+              <Image
+                source={require('../../assets/images/customer.png')}
+                style={styles.profileImage}
+              />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -200,8 +239,6 @@ const Home = () => {
               bottom: 0,
               width: '200%',
               height: '200%',
-             
-              filter: 'blur(20px)',
             }}
           />
           <View style={{
@@ -211,7 +248,7 @@ const Home = () => {
             right: 0,
             bottom: 0,
             borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(8, 8, 8, 1)',
-            backgroundColor: isDark ? 'rgba(18, 18, 18, 0.42)' : 'rgba(6, 6, 6, 0.42)',
+            backgroundColor: isDark ? 'rgba(104, 102, 102, 0.14)' : 'rgba(6, 6, 6, 0.42)',
           }} />
           <Text style={styles.featureTitle}>Professional Cleaning Services</Text>
           <Text style={styles.featureDescription}>
@@ -267,8 +304,8 @@ const Home = () => {
 
        
 
-        <View style={[styles.featureCard, { backgroundColor: '#926bce' }]}>
-          <Text style={styles.featureTitle}>Repeat Previous Order</Text>
+        <View style={[styles.featureCard, { backgroundColor: isDark ? '#121212' : '#c6a788' }]}>
+          <Text style={[styles.featureTitle,{color:isDark ? '#fff':'#1a1a1a'}]}>Repeat Previous Order</Text>
           <Text style={styles.featureDescription}>
             Schedule and manage recurring cleanings with your favorite professionals.
           </Text>
@@ -293,7 +330,7 @@ const Home = () => {
       <LinearGradient
         colors={ isDark 
           ? ['rgba(18, 18, 18, 0)', 'rgba(0, 0, 0, 0.95)'] 
-          : ['rgba(243, 243, 233, 0)', 'rgba(247, 243, 241, 0.95)']}
+          : ['rgba(243, 243, 233, 0)', 'rgba(255, 211, 181, 0.92)']}
         style={styles.bottomBlur}
       />
       
@@ -347,21 +384,21 @@ const styles = StyleSheet.create({
   logo: {
     width: 40,
     height: 40,
-    marginRight: 12,
+    marginRight: 8,
   },
   appName: {
     fontSize: 22,
-    fontFamily: 'semi-bold',
+    fontFamily: 'audiowide_400Regular',
     color: '#1a1a1a',
-    letterSpacing: -0.5,
+    letterSpacing: -0.9,
   },
   headerBottom: {
-    marginTop: 10,
+    marginTop: 20,
     paddingHorizontal: 20,
   },
   greeting: {
     fontSize: 28,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Comfortaa_400Regular',
     marginBottom: 4,
   },
   location: {
@@ -370,7 +407,15 @@ const styles = StyleSheet.create({
     color: '#666666',
   },
   profileIcon: {
-    padding: 5,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
   },
   featureCard: {
     borderWidth: 2,
@@ -514,15 +559,15 @@ const styles = StyleSheet.create({
   bottomDock: {
     position: 'absolute',
     bottom: 20,
-    left: 30,
-    right: 30,
+    left: 50,
+    right: 50,
     height: 64,
     borderRadius: 26,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
     paddingHorizontal: 20,
-    backgroundColor: '#333333',
+    backgroundColor: '#fcebd5',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

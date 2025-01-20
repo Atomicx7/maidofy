@@ -60,7 +60,7 @@ const Main = () => {
 const SplashScreen = () => (
     <View style={styles.container}>
         <Image
-            source={require('../assets/images/logo_t.png')}
+            source={require('../assets/LOGOS/logo5.png')}
             style={splashStyles.img}
         />
         <CustomText variant="h3" fontFamily="Medium" style={splashStyles.text}>
@@ -81,8 +81,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     logo: {
-        width: 200,
-        height: 200,
+        width: 10000,
+        height: 10000,
         resizeMode: 'contain',
     },
 });

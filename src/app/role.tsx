@@ -2,8 +2,16 @@ import CustomText from "@/components/shared/CustomText";
 import { roleStyles } from "@/styles/roleStyles";
 import { router } from "expo-router";
 import React from "react"
-import { View, Image, TouchableOpacity } from "react-native"
+import { View, Image, TouchableOpacity, useColorScheme } from "react-native"
+import { useTheme } from '../utils/theme';
+import { StatusBar } from "react-native";
+
+
 const Role = () => {
+    const { colors } = useTheme();
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === 'dark';
+
     const handleCustomerPress = () => {
         router.navigate('/customer/auth');
     }
@@ -11,7 +19,7 @@ const Role = () => {
         router.navigate('/worker/auth');
     }
   return (
-    <View style={roleStyles.container}>
+    <View style={[roleStyles.container, { backgroundColor: colors.background }]}>
         <Image
             source={require('../assets/LOGOS/logo2.png')} // Ensure this path is correct
             style={roleStyles.logo}
