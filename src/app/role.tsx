@@ -21,7 +21,7 @@ const Role = () => {
   return (
     <View style={[roleStyles.container, { backgroundColor: colors.background }]}>
         <Image
-            source={require('../assets/LOGOS/logo2.png')} // Ensure this path is correct
+            source={require('../assets/LOGOS/logo5.png')} // Ensure this path is correct
             style={roleStyles.logo}
         />
         <CustomText fontFamily="Medium" variant="h2" style={roleStyles.title}>
@@ -45,9 +45,9 @@ const Role = () => {
                 style={roleStyles.image}
             />
             <View style={roleStyles.cardContent}>
-            <CustomText style={roleStyles.title} >Captain</CustomText>
+            <CustomText style={roleStyles.title} >Worker</CustomText>
                 <CustomText style={roleStyles.description} >
-                    Are you a Captain?
+                    Are you a Worker?
                 </CustomText>
             </View>
         </TouchableOpacity> 

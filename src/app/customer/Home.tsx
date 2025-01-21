@@ -164,7 +164,7 @@ const Home = () => {
   };
 
   const handleNavigateProfile = () => {
-    router.navigate(`./Profile?firstName=${userData.firstName}&lastName=${userData.lastName}&mobileNumber=${userData.mobileNumber}&landmark=${userData.landmark}&city=${userData.city}&address=${userData.address}`);
+    router.navigate('./profileSection.tsx');
   };
   const handleBookNow = () => {
     router.navigate('./Book');
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: 'audiowide_400Regular',
     color: '#1a1a1a',
-    letterSpacing: -0.9,
+    letterSpacing: -1.0,
   },
   headerBottom: {
     marginTop: 20,

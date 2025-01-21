@@ -12,7 +12,7 @@ export const roleStyles = StyleSheet.create({
         resizeMode: 'contain',
         height: 200,
         marginTop: 40,
-        marginBottom: 40
+        marginBottom: 20
     },
     card: {
         width: '90%',

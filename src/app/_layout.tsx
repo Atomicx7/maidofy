@@ -44,6 +44,7 @@ const Layout = () => {
       <Stack.Screen name="customer/History"/>
       <Stack.Screen name="customer/Wallet"/>
       <Stack.Screen name="customer/Settings"/>
+      <Stack.Screen name="customer/profileSection"/>
     </Stack>
   );
 };
