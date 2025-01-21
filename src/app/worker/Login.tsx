@@ -8,9 +8,10 @@ import PhoneInput from "@/components/shared/PhoneInput";
 import { commonStyles } from "@/styles/commonStyles";
 import CustomButton from "@/components/shared/CustomButton";
 import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 import { storeWorkerData, getWorkerData, clearWorkerData } from '../../storage'; // Import worker-specific storage functions
+import { router } from "expo-router";
 
 const API_URL = 'http://192.168.29.223:3000'; // Replace with your actual API URL
 
@@ -24,7 +25,14 @@ const fetchWorkerData = async (mobileNumber: string) => {
 };
 
 type LoginNavigationProp = {
-  navigate: (screen: string, params: { userId: string; userType: 'customer' | 'worker'; firstName: string; lastName: string; city: string; landmark: string; mobileNumber: string; }) => void;
+  navigate: (screen: string, params: { 
+    mobileNumber: string; 
+    userType?: string; 
+    firstName?: string; 
+    lastName?: string; 
+    city?: string; 
+    landmark?: string; 
+  }) => void;
 };
 
 const Login = () => {
@@ -37,12 +45,6 @@ const Login = () => {
       const storedWorkerData = await getWorkerData('workerData');
       if (storedWorkerData) {
         navigation.navigate('worker/Home', {
-          userId: storedWorkerData._id,
-          userType: storedWorkerData.userType,
-          firstName: storedWorkerData.firstName,
-          lastName: storedWorkerData.lastName,
-          city: storedWorkerData.city,
-          landmark: storedWorkerData.landmark,
           mobileNumber: storedWorkerData.mobileNumber,
         });
       }
@@ -72,21 +74,20 @@ const Login = () => {
       if (workerData) {
         await storeWorkerData('workerData', workerData); // Store worker data in AsyncStorage
         navigation.navigate('worker/Home', {
-          userId: workerData._id,
-          userType: workerData.userType,
-          firstName: workerData.firstName,
-          lastName: workerData.lastName,
-          city: workerData.city,
-          landmark: workerData.landmark,
           mobileNumber: workerData.mobileNumber,
         });
       }
     } catch (error: any) {
       console.error('Login error details:', error);
-      Alert.alert(
-        'Login Failed',
-        error.message || 'Please check your connection and try again'
-      );
+      if (axios.isAxiosError(error as any) && (error as any).response) {
+        const axiosError = error as AxiosError;
+        const errorMessage = (axiosError.response?.data as { message: string }).message;
+        Alert.alert('Error', 'Error logging in: ' + errorMessage);
+      } else if (error.message) {
+        Alert.alert('Error', 'Network request failed: ' + error.message);
+      } else {
+        Alert.alert('Error', 'Login Failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -111,7 +112,6 @@ const Login = () => {
         />
 
         <TouchableOpacity onPress={() => navigation.navigate('worker/auth', {
-            userId: "",
             userType: "customer",
             firstName: "",
             lastName: "",

@@ -10,13 +10,16 @@ import {
   Linking,
   Switch,
   ScrollView,
+  Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MapComponent from './Map';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { getWorkerData } from '../../storage'; // Import worker-specific storage functions
 import { useFocusEffect } from '@react-navigation/native';
+import io from 'socket.io-client';
 
 interface Job {
   id: string;
@@ -25,6 +28,8 @@ interface Job {
   price: string;
   duration: string;
 }
+
+const socket = io('http://192.168.29.223:3000'); // Replace with your server URL
 
 const Home = () => {
   const [greeting, setGreeting] = useState('Good morning');
@@ -50,13 +55,17 @@ const Home = () => {
     firstName: '',
     lastName: '',
     mobileNumber: '',
-    address: '',
+    street: '',
     landmark: '',
     city: '',
+    state: '',
+    pincode: '',
     email: '',
     dob: '',
     age: ''
   });
+  const [messages, setMessages] = useState<string[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const updateGreeting = () => {
@@ -72,22 +81,42 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    socket.on('message', (message: string) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    return () => {
+      socket.off('message');
+    };
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       const fetchWorkerData = async () => {
         try {
           const storedUserData = await getWorkerData('workerData');
           if (storedUserData) {
-            setWorkerData(storedUserData);
+            const response = await axios.get(`http://192.168.29.223:3000/workers/${storedUserData.mobileNumber}`);
+            setWorkerData(response.data);
           }
         } catch (error) {
-          console.error('Error fetching worker data:', error);
+          if (axios.isAxiosError(error)) {
+            console.error('Error fetching worker data:', error.message);
+          } else {
+            console.error('Error fetching worker data:', error);
+          }
+          alert('Failed to fetch worker data. Please check your network connection and try again.');
         }
       };
 
       fetchWorkerData();
     }, [])
   );
+
+  const handleSendMessage = (message: string) => {
+    socket.emit('message', message);
+  };
 
   const handleNavigate = () => {
     router.push('/worker/History');
@@ -102,8 +131,8 @@ const Home = () => {
   };
   
   const handleNavigateProfile = () => {
-    const { firstName, lastName, mobileNumber, address, landmark, city, email, dob, age } = workerData;
-    router.push(`/worker/Profile?firstName=${firstName}&lastName=${lastName}&mobileNumber=${mobileNumber}&address=${address}&landmark=${landmark}&city=${city}&email=${email}&dob=${dob}&age=${age}`);
+    const { firstName, lastName, mobileNumber, street, landmark, city, state, pincode, email, dob, age } = workerData;
+    router.push(`/worker/Profile?firstName=${firstName}&lastName=${lastName}&mobileNumber=${mobileNumber}&street=${street}&landmark=${landmark}&city=${city}&state=${state}&pincode=${pincode}&email=${email}&dob=${dob}&age=${age}`);
   };
 
   const openMaps = () => {
@@ -141,7 +170,7 @@ const Home = () => {
       <ScrollView style={styles.scrollView}>
         <View style={styles.headerBottom}>
           <Text style={styles.greeting}>{greeting}, {workerData.firstName}</Text>
-          <Text style={styles.location}>{workerData.city}, {workerData.address}</Text>
+          <Text style={styles.location}>{workerData.city}, {workerData.street}</Text>
           <View style={styles.toggleContainer}>
             <Text style={styles.toggleText}>Ready for work</Text>
             <Switch
@@ -175,6 +204,10 @@ const Home = () => {
             </View>
           ))}
         </View>
+
+        <TouchableOpacity style={styles.sendMessageButton} onPress={() => setModalVisible(true)}>
+          <Text style={styles.sendMessageButtonText}>Messages</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       <View style={styles.bottomDock}>
@@ -191,6 +224,28 @@ const Home = () => {
           <Icon name="settings-outline" size={24} color="#757575" />
         </TouchableOpacity>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>Messages</Text>
+          {messages.map((message, index) => (
+            <View key={index} style={styles.messageCard}>
+              <Text style={styles.messageText}>{message}</Text>
+            </View>
+          ))}
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setModalVisible(false)}
+          >
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -344,6 +399,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
   },
+  sendMessageButton: {
+    backgroundColor: '#FF9800',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 16,
+  },
+  sendMessageButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
   bottomDock: {
     position: 'absolute',
     bottom: 20,
@@ -367,6 +436,44 @@ const styles = StyleSheet.create({
   },
   dockItem: {
     padding: 12,
+  },
+  modalView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+    color: '#ffffff',
+    marginBottom: 16,
+  },
+  messageCard: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    marginBottom: 10,
+    backgroundColor: '#ffffff',
+  },
+  messageText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#333333',
+  },
+  closeButton: {
+    backgroundColor: '#FF9800',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  closeButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
   },
 });
 
